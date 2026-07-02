@@ -7,8 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Los modelos de dominio se añaden por fases (ver plan):
-// Fase 7+: Check, CheckLine, PaymentIntentRecord, LineClaim
+// ──────────────── Cuentas de mesa (Proyecto B) ───────────────────
+
+enum CheckStatus {
+  OPEN
+  PARTIALLY_PAID
+  PAID
+  CLOSED
+  CANCELLED
+}
+
+// La cuenta de una mesa. Solo puede haber una abierta por mesa.
+model Check {
+  id           String      @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tableId      String?
+  table        Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  // Snapshot del nombre de la mesa (sobrevive a borrados/renombres)
+  tableName    String
+  status       CheckStatus @default(OPEN)
+  // Acceso anónimo de los comensales desde el QR (Fase 9)
+  publicToken  String      @unique
+  notes        String?
+  openedById   String?
+  closedAt     DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  lines CheckLine[]
+
+  @@index([restaurantId, status])
+  @@index([tableId])
+  @@map("checks")
+}
+
+// Línea de la cuenta con snapshot de nombre y precio (la carta puede cambiar).
+model CheckLine {
+  id             String    @id @default(cuid())
+  checkId        String
+  check          Check     @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  menuItemId     String?
+  menuItem       MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name           String
+  unitPriceCents Int
+  quantity       Int       @default(1)
+  // Unidades ya pagadas en el reparto por ítems (Fase 9)
+  paidUnits      Int       @default(0)
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  @@index([checkId])
+  @@map("check_lines")
+}
 
 // ───────────────────────── Reservas ──────────────────────────────
 
@@ -193,6 +244,7 @@ model Restaurant {
   menus             Menu[]
   reservationShifts ReservationShift[]
   reservations      Reservation[]
+  checks            Check[]
 
   @@index([organizationId])
   @@map("restaurants")
@@ -300,6 +352,7 @@ model MenuItem {
   createdAt   DateTime   @default(now())
 
   modifierGroups ItemModifierGroup[]
+  checkLines     CheckLine[]
 
   @@index([categoryId])
   @@map("menu_items")
@@ -361,6 +414,7 @@ model Table {
   createdAt DateTime @default(now())
 
   reservations Reservation[]
+  checks       Check[]
 
   @@index([zoneId])
   @@map("tables")

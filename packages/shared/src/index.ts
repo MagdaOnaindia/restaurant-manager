@@ -4,3 +4,4 @@ export * from "./orgs";
 export * from "./tables";
 export * from "./menus";
 export * from "./reservations";
+export * from "./checks";

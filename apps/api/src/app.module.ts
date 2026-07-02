@@ -10,6 +10,7 @@ import { TablesModule } from "./tables/tables.module";
 import { MenusModule } from "./menus/menus.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { ReservationsModule } from "./reservations/reservations.module";
+import { ChecksModule } from "./checks/checks.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -24,6 +25,7 @@ import { HealthController } from "./health/health.controller";
     MenusModule,
     UploadsModule,
     ReservationsModule,
+    ChecksModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

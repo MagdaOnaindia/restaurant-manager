@@ -15,6 +15,7 @@ import {
   Store,
   UserRound,
   Users,
+  UtensilsCrossed,
 } from "lucide-react";
 import { roleAtLeast } from "@rms/shared";
 import { useAuth } from "@/components/auth-provider";
@@ -30,6 +31,7 @@ function Sidebar() {
 
   const nav = [
     { href: "/app", label: "Inicio", icon: LayoutDashboard, show: true },
+    { href: "/app/pos", label: "Comandero", icon: UtensilsCrossed, show: true },
     { href: "/app/tables", label: "Mesas", icon: Armchair, show: true },
     { href: "/app/menus", label: "Cartas", icon: NotebookText, show: true },
     { href: "/app/reservations", label: "Reservas", icon: CalendarDays, show: true },
