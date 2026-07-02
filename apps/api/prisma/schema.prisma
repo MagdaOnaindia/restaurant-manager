@@ -35,7 +35,9 @@ model Check {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  lines CheckLine[]
+  lines    CheckLine[]
+  payments Payment[]
+  claims   LineClaim[]
 
   @@index([restaurantId, status])
   @@index([tableId])
@@ -57,8 +59,67 @@ model CheckLine {
   notes          String?
   createdAt      DateTime  @default(now())
 
+  claims LineClaim[]
+
   @@index([checkId])
   @@map("check_lines")
+}
+
+// ───────────────── Pagos del cobro dividido ──────────────────────
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  STRIPE
+  CASH
+}
+
+// Espejo de cada intento de pago (Stripe PaymentIntent o cobro manual en efectivo).
+model Payment {
+  id                    String        @id @default(cuid())
+  checkId               String
+  check                 Check         @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  // Importe que cubre cuenta (SIN propina), en céntimos
+  amountCents           Int
+  tipCents              Int           @default(0)
+  status                PaymentStatus @default(PENDING)
+  method                PaymentMethod @default(STRIPE)
+  stripePaymentIntentId String?       @unique
+  payerName             String?
+  receiptEmail          String?
+  // Qué cubre: { mode, shares?: {total,pay}, claims?: [{lineId, units}] }
+  coverage              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([checkId])
+  @@map("payments")
+}
+
+// Reserva temporal de unidades de línea durante el reparto por ítems:
+// evita que dos comensales paguen el mismo plato a la vez.
+model LineClaim {
+  id        String    @id @default(cuid())
+  checkId   String
+  check     Check     @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  lineId    String
+  line      CheckLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  // Sesión anónima del comensal (cookie/localStorage)
+  sessionId String
+  units     Int
+  // Se vincula al pago cuando el comensal inicia el cobro
+  paymentId String?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([lineId])
+  @@index([checkId, sessionId])
+  @@map("line_claims")
 }
 
 // ───────────────────────── Reservas ──────────────────────────────

@@ -3,11 +3,11 @@ import { AuthModule } from "../auth/auth.module";
 import { OrgsModule } from "../orgs/orgs.module";
 import { StripeService } from "./stripe.service";
 import { ConnectController } from "./connect.controller";
-import { StripeWebhookController } from "./webhook.controller";
 
+// El receptor de webhooks vive en SplitPayModule (necesita SplitPayService).
 @Module({
   imports: [AuthModule, OrgsModule],
-  controllers: [ConnectController, StripeWebhookController],
+  controllers: [ConnectController],
   providers: [StripeService],
   exports: [StripeService],
 })

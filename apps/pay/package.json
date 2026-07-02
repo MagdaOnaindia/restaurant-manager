@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@rms/shared": "workspace:*",
+    "@stripe/react-stripe-js": "^6.7.0",
+    "@stripe/stripe-js": "^9.9.0",
     "clsx": "^2.1.1",
     "next": "^15.3.0",
     "react": "^19.0.0",

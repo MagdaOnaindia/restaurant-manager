@@ -12,27 +12,31 @@ import type {
   OpenCheckInput,
   UpdateLineInput,
 } from "@rms/shared";
-import type { Check, CheckLine } from "@prisma/client";
+import type { Check, CheckLine, Payment } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { CheckEventsService } from "./check-events.service";
 
 /** Estados en los que la cuenta sigue "viva" en la mesa. */
 export const LIVE_STATUSES = ["OPEN", "PARTIALLY_PAID", "PAID"] as const;
 
-export function computeTotals(lines: CheckLine[], manualPaidCents = 0) {
+/** El "pagado" sale de los pagos con éxito (Stripe o efectivo), nunca del cliente. */
+export function computeTotals(lines: CheckLine[], payments: Payment[]) {
   const totalCents = lines.reduce((acc, l) => acc + l.unitPriceCents * l.quantity, 0);
-  const paidByUnits = lines.reduce((acc, l) => acc + l.unitPriceCents * l.paidUnits, 0);
-  // Nota: en Fase 9 los pagos reales vendrán de PaymentIntentRecord; paidUnits
-  // marca unidades cubiertas por el reparto por ítems.
-  const paidCents = paidByUnits + manualPaidCents;
+  const paidCents = payments
+    .filter((p) => p.status === "SUCCEEDED")
+    .reduce((acc, p) => acc + p.amountCents, 0);
   return { totalCents, paidCents, remainingCents: Math.max(0, totalCents - paidCents) };
 }
 
 @Injectable()
 export class ChecksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: CheckEventsService,
+  ) {}
 
-  private toDetail(check: Check & { lines: CheckLine[] }): CheckDetail {
-    const totals = computeTotals(check.lines);
+  private toDetail(check: Check & { lines: CheckLine[]; payments: Payment[] }): CheckDetail {
+    const totals = computeTotals(check.lines, check.payments);
     return {
       id: check.id,
       tableId: check.tableId,
@@ -56,7 +60,7 @@ export class ChecksService {
   private async checkOf(restaurantId: string, checkId: string) {
     const check = await this.prisma.check.findFirst({
       where: { id: checkId, restaurantId },
-      include: { lines: { orderBy: { createdAt: "asc" } } },
+      include: { lines: { orderBy: { createdAt: "asc" } }, payments: true },
     });
     if (!check) throw new NotFoundException("Cuenta no encontrada");
     return check;
@@ -74,7 +78,7 @@ export class ChecksService {
           include: {
             checks: {
               where: { status: { in: [...LIVE_STATUSES] } },
-              include: { lines: true },
+              include: { lines: true, payments: true },
               take: 1,
             },
           },
@@ -86,19 +90,21 @@ export class ChecksService {
       name: z.name,
       tables: z.tables.map((t) => {
         const check = t.checks[0];
+        const totals = check ? computeTotals(check.lines, check.payments) : null;
         return {
           id: t.id,
           name: t.name,
           capacity: t.capacity,
           qrCode: t.qrCode,
-          check: check
-            ? {
-                id: check.id,
-                status: check.status,
-                totalCents: computeTotals(check.lines).totalCents,
-                paidCents: computeTotals(check.lines).paidCents,
-              }
-            : null,
+          check:
+            check && totals
+              ? {
+                  id: check.id,
+                  status: check.status,
+                  totalCents: totals.totalCents,
+                  paidCents: totals.paidCents,
+                }
+              : null,
         };
       }),
     }));
@@ -128,7 +134,7 @@ export class ChecksService {
           openedById: userId,
           publicToken: randomBytes(16).toString("base64url"),
         },
-        include: { lines: true },
+        include: { lines: true, payments: true },
       });
     });
     return this.toDetail(check);
@@ -146,8 +152,9 @@ export class ChecksService {
     const updated = await this.prisma.check.update({
       where: { id: check.id },
       data: { status: "CLOSED", closedAt: new Date() },
-      include: { lines: true },
+      include: { lines: true, payments: true },
     });
+    this.events.emit(check.id);
     return this.toDetail(updated);
   }
 
@@ -156,15 +163,16 @@ export class ChecksService {
     if (check.status === "CLOSED" || check.status === "CANCELLED") {
       throw new BadRequestException("La cuenta ya está cerrada");
     }
-    const { paidCents } = computeTotals(check.lines);
+    const { paidCents } = computeTotals(check.lines, check.payments);
     if (paidCents > 0) {
       throw new BadRequestException("No se puede cancelar una cuenta con pagos registrados");
     }
     const updated = await this.prisma.check.update({
       where: { id: check.id },
       data: { status: "CANCELLED", closedAt: new Date() },
-      include: { lines: true },
+      include: { lines: true, payments: true },
     });
+    this.events.emit(check.id);
     return this.toDetail(updated);
   }
 
@@ -215,6 +223,7 @@ export class ChecksService {
         },
       });
     }
+    this.events.emit(checkId);
     return this.get(restaurantId, checkId);
   }
 
@@ -233,6 +242,7 @@ export class ChecksService {
       );
     }
     await this.prisma.checkLine.update({ where: { id: lineId }, data: input });
+    this.events.emit(checkId);
     return this.get(restaurantId, checkId);
   }
 
@@ -244,6 +254,7 @@ export class ChecksService {
       throw new BadRequestException("No se puede quitar una línea con unidades pagadas");
     }
     await this.prisma.checkLine.delete({ where: { id: lineId } });
+    this.events.emit(checkId);
     return this.get(restaurantId, checkId);
   }
 }

@@ -12,6 +12,7 @@ import type { Request } from "express";
 import type Stripe from "stripe";
 import { PrismaService } from "../prisma/prisma.service";
 import { StripeService } from "./stripe.service";
+import { SplitPayService } from "../split-pay/split-pay.service";
 
 /**
  * Receptor de webhooks de Stripe (fuente de verdad de pagos y cuentas).
@@ -24,6 +25,7 @@ export class StripeWebhookController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
+    private readonly splitPay: SplitPayService,
   ) {}
 
   @Post()
@@ -51,23 +53,19 @@ export class StripeWebhookController {
         );
         break;
       }
-      case "payment_intent.succeeded":
+      case "payment_intent.succeeded": {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        await this.splitPay.handleIntentSucceeded(intent.id);
+        break;
+      }
       case "payment_intent.payment_failed": {
-        // Se gestiona en el módulo de cobro dividido (Fase 9)
-        await this.handlePaymentIntentEvent(event);
+        const intent = event.data.object as Stripe.PaymentIntent;
+        await this.splitPay.handleIntentFailed(intent.id);
         break;
       }
       default:
         this.logger.debug(`Evento ignorado: ${event.type}`);
     }
     return { received: true };
-  }
-
-  private async handlePaymentIntentEvent(event: Stripe.Event) {
-    const intent = event.data.object as Stripe.PaymentIntent;
-    const succeeded = event.type === "payment_intent.succeeded";
-    // La lógica de marcar pagos/líneas se conecta en la Fase 9 (SplitPayService).
-    this.logger.log(`${event.type}: ${intent.id} (${intent.amount} ${intent.currency})`);
-    void succeeded;
   }
 }

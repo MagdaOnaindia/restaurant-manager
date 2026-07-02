@@ -12,6 +12,7 @@ import { UploadsModule } from "./uploads/uploads.module";
 import { ReservationsModule } from "./reservations/reservations.module";
 import { ChecksModule } from "./checks/checks.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { SplitPayModule } from "./split-pay/split-pay.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -28,6 +29,7 @@ import { HealthController } from "./health/health.controller";
     ReservationsModule,
     ChecksModule,
     PaymentsModule,
+    SplitPayModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
