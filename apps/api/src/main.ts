@@ -5,7 +5,8 @@ import { join } from "path";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // rawBody: necesario para verificar la firma de los webhooks de Stripe
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
 
   app.use(cookieParser());
   // Fotos de platos subidas en desarrollo (S3-compatible en producción)

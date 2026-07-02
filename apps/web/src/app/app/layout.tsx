@@ -8,6 +8,7 @@ import {
   Armchair,
   CalendarDays,
   ChefHat,
+  CreditCard,
   Globe,
   LayoutDashboard,
   LogOut,
@@ -40,6 +41,12 @@ function Sidebar() {
       label: "Mi página",
       icon: Globe,
       show: activeOrg ? roleAtLeast(activeOrg.role, "MANAGER") : false,
+    },
+    {
+      href: "/app/payments",
+      label: "Cobros",
+      icon: CreditCard,
+      show: activeOrg ? roleAtLeast(activeOrg.role, "ADMIN") : false,
     },
     {
       href: "/app/team",
