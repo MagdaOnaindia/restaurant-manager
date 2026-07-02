@@ -8,9 +8,60 @@ datasource db {
 }
 
 // Los modelos de dominio se añaden por fases (ver plan):
-// Fase 1: User, VerificationToken
 // Fase 2: Organization, Membership, Invitation, Restaurant
 // Fase 3: Zone, Table
 // Fase 4: Menu, MenuSchedule, MenuCategory, MenuItem, ItemModifierGroup, ItemModifier
 // Fase 5: ReservationShift, Reservation
 // Fase 7+: Check, CheckLine, PaymentIntentRecord, LineClaim
+
+// ─────────────────────────── Identidad ───────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  // Nullable para poder añadir SSO (Google, etc.) sin migración
+  passwordHash String?
+  name         String
+  emailVerifiedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tokens   VerificationToken[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      VerificationTokenType
+  // Se guarda el hash SHA-256 del token, nunca el token en claro
+  tokenHash String                @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  @@index([userId, type])
+  @@map("verification_tokens")
+}
+
+// Sesiones de refresh token (rotación + revocación en logout)
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
