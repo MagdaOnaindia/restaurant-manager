@@ -72,6 +72,34 @@ export class MailService {
     );
   }
 
+  async sendPaymentReceipt(
+    to: string,
+    data: {
+      restaurantName: string;
+      tableName: string;
+      amountCents: number;
+      tipCents: number;
+      date: string;
+    },
+  ) {
+    const euros = (c: number) => (c / 100).toFixed(2).replace(".", ",") + " €";
+    const total = data.amountCents + data.tipCents;
+    await this.send(
+      to,
+      `Tu recibo de ${data.restaurantName}`,
+      this.layout(
+        "Gracias por tu pago",
+        `<p>Resumen de tu pago en <strong>${data.restaurantName}</strong> (${data.tableName}), ${data.date}:</p>
+         <ul>
+           <li>Consumición: <strong>${euros(data.amountCents)}</strong></li>
+           ${data.tipCents > 0 ? `<li>Propina: <strong>${euros(data.tipCents)}</strong></li>` : ""}
+           <li>Total: <strong>${euros(total)}</strong></li>
+         </ul>
+         <p>¡Hasta pronto!</p>`,
+      ),
+    );
+  }
+
   async sendReservationConfirmation(
     to: string,
     data: {

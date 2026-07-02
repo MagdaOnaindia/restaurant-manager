@@ -37,6 +37,13 @@ export const updateLineSchema = z.object({
 });
 export type UpdateLineInput = z.infer<typeof updateLineSchema>;
 
+/** Cobro manual (efectivo/datáfono propio) registrado por el personal. */
+export const cashPaymentSchema = z.object({
+  amountCents: z.number().int().min(1).max(1_000_000),
+  payerName: z.string().trim().max(60).optional(),
+});
+export type CashPaymentInput = z.infer<typeof cashPaymentSchema>;
+
 // ── Tipos de respuesta ──────────────────────────────────────────────
 
 export interface CheckLineInfo {
@@ -49,6 +56,16 @@ export interface CheckLineInfo {
   notes: string | null;
 }
 
+export interface CheckPaymentInfo {
+  id: string;
+  amountCents: number;
+  tipCents: number;
+  method: "STRIPE" | "CASH";
+  status: "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED";
+  payerName: string | null;
+  createdAt: string;
+}
+
 export interface CheckDetail {
   id: string;
   tableId: string | null;
@@ -56,10 +73,26 @@ export interface CheckDetail {
   status: CheckStatus;
   notes: string | null;
   createdAt: string;
+  /** Token público de la cuenta: el comandero lo usa para el stream SSE. */
+  publicToken: string;
   lines: CheckLineInfo[];
+  payments: CheckPaymentInfo[];
   totalCents: number;
   paidCents: number;
+  tipCents: number;
   remainingCents: number;
+}
+
+export interface CheckHistoryEntry {
+  id: string;
+  tableName: string;
+  status: CheckStatus;
+  createdAt: string;
+  closedAt: string | null;
+  totalCents: number;
+  paidCents: number;
+  tipCents: number;
+  paymentCount: number;
 }
 
 export interface FloorTable {

@@ -1,12 +1,15 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import {
   addLineSchema,
+  cashPaymentSchema,
   openCheckSchema,
   updateLineSchema,
   type AddLineInput,
+  type CashPaymentInput,
   type OpenCheckInput,
   type UpdateLineInput,
 } from "@rms/shared";
+import { Query } from "@nestjs/common";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { JwtAuthGuard, type RequestUser } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -34,10 +37,38 @@ export class ChecksController {
     return { check: await this.checks.open(restaurantId, user.userId, body) };
   }
 
+  @Get("checks-history")
+  @OrgRoles("MANAGER")
+  async history(
+    @Param("restaurantId") restaurantId: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+  ) {
+    return { checks: await this.checks.history(restaurantId, from, to) };
+  }
+
   @Get("checks/:checkId")
   @OrgRoles("STAFF")
   async get(@Param("restaurantId") restaurantId: string, @Param("checkId") checkId: string) {
     return { check: await this.checks.get(restaurantId, checkId) };
+  }
+
+  @Post("checks/:checkId/cash-payment")
+  @HttpCode(200)
+  @OrgRoles("STAFF")
+  async cashPayment(
+    @Param("restaurantId") restaurantId: string,
+    @Param("checkId") checkId: string,
+    @Body(new ZodValidationPipe(cashPaymentSchema)) body: CashPaymentInput,
+  ) {
+    return {
+      check: await this.checks.recordCashPayment(
+        restaurantId,
+        checkId,
+        body.amountCents,
+        body.payerName,
+      ),
+    };
   }
 
   @Post("checks/:checkId/close")

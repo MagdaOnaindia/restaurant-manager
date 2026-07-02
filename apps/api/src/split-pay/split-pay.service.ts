@@ -17,6 +17,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { StripeService } from "../payments/stripe.service";
+import { MailService } from "../mail/mail.service";
 import { CheckEventsService } from "../checks/check-events.service";
 import { computeTotals, LIVE_STATUSES } from "../checks/checks.service";
 
@@ -37,6 +38,7 @@ export class SplitPayService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
+    private readonly mail: MailService,
     private readonly events: CheckEventsService,
     private readonly config: ConfigService,
   ) {}
@@ -387,6 +389,20 @@ export class SplitPayService {
 
     this.events.emit(payment.checkId);
     this.logger.log(`Pago confirmado: ${payment.id} (${payment.amountCents}c)`);
+
+    if (payment.receiptEmail) {
+      const check = await this.prisma.check.findUniqueOrThrow({
+        where: { id: payment.checkId },
+        include: { restaurant: { select: { name: true } } },
+      });
+      await this.mail.sendPaymentReceipt(payment.receiptEmail, {
+        restaurantName: check.restaurant.name,
+        tableName: check.tableName,
+        amountCents: payment.amountCents,
+        tipCents: payment.tipCents,
+        date: new Date().toLocaleDateString("es-ES"),
+      });
+    }
   }
 
   async handleIntentFailed(stripePaymentIntentId: string): Promise<void> {

@@ -27,6 +27,7 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
   const [menus, setMenus] = useState<MenuDetail[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [freeLine, setFreeLine] = useState<{ name: string; price: string } | null>(null);
+  const [cash, setCash] = useState<{ amount: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!restaurantId) return;
@@ -45,6 +46,17 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Pagos en tiempo real: cualquier cambio (QR de comensales, efectivo…) refresca
+  const publicToken = check?.publicToken;
+  useEffect(() => {
+    if (!publicToken) return;
+    const es = new EventSource(
+      `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/pay/checks/${publicToken}/events`,
+    );
+    es.addEventListener("update", () => void load());
+    return () => es.close();
+  }, [publicToken, load]);
 
   if (error && !check) return <Alert>{error}</Alert>;
   if (!check || !menus) return <Spinner />;
@@ -195,6 +207,27 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
             </ul>
           )}
 
+          {check.payments.length > 0 && (
+            <div className="mt-3 border-t border-neutral-200 pt-2">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                Pagos recibidos
+              </div>
+              {check.payments.map((p) => (
+                <div key={p.id} className="flex justify-between py-0.5 text-sm">
+                  <span className="text-neutral-600">
+                    {p.method === "CASH" ? "💶" : "💳"} {p.payerName || "Comensal"}
+                    {p.tipCents > 0 && (
+                      <span className="ml-1 text-xs text-emerald-600">
+                        (+{formatCents(p.tipCents)} propina)
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium text-green-700">{formatCents(p.amountCents)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="mt-3 space-y-1 border-t border-neutral-200 pt-3 text-sm">
             <div className="flex justify-between">
               <span className="text-neutral-500">Total</span>
@@ -210,6 +243,62 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
             </div>
           </div>
         </Card>
+
+        {(check.status === "OPEN" || check.status === "PARTIALLY_PAID") &&
+          check.remainingCents > 0 && (
+            <Card>
+              {cash ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const cents = parseEurosToCents(cash.amount);
+                    if (cents === null || cents < 1) {
+                      setError("Importe no válido");
+                      return;
+                    }
+                    void act(async () => {
+                      await apiPost(
+                        `/restaurants/${restaurantId}/checks/${checkId}/cash-payment`,
+                        { amountCents: cents },
+                      );
+                      setCash(null);
+                    });
+                  }}
+                  className="space-y-3"
+                >
+                  <Field label={`Efectivo recibido (pendiente ${formatCents(check.remainingCents)})`} htmlFor="cashAmount">
+                    <Input
+                      id="cashAmount"
+                      required
+                      autoFocus
+                      placeholder="0,00"
+                      value={cash.amount}
+                      onChange={(e) => setCash({ amount: e.target.value })}
+                    />
+                  </Field>
+                  <div className="flex gap-2">
+                    <Button type="submit">Registrar cobro</Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() =>
+                        setCash({ amount: (check.remainingCents / 100).toFixed(2).replace(".", ",") })
+                      }
+                    >
+                      Todo ({formatCents(check.remainingCents)})
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => setCash(null)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <Button variant="secondary" className="w-full" onClick={() => setCash({ amount: "" })}>
+                  💶 Cobrar en efectivo
+                </Button>
+              )}
+            </Card>
+          )}
 
         {editable && (
           <Card>

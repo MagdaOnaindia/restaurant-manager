@@ -10,6 +10,7 @@ import {
   ChefHat,
   CreditCard,
   Globe,
+  History,
   LayoutDashboard,
   LogOut,
   NotebookText,
@@ -40,6 +41,12 @@ function Sidebar() {
       href: "/app/settings",
       label: "Mi página",
       icon: Globe,
+      show: activeOrg ? roleAtLeast(activeOrg.role, "MANAGER") : false,
+    },
+    {
+      href: "/app/history",
+      label: "Historial",
+      icon: History,
       show: activeOrg ? roleAtLeast(activeOrg.role, "MANAGER") : false,
     },
     {

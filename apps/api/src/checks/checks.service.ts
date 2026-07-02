@@ -37,6 +37,7 @@ export class ChecksService {
 
   private toDetail(check: Check & { lines: CheckLine[]; payments: Payment[] }): CheckDetail {
     const totals = computeTotals(check.lines, check.payments);
+    const succeeded = check.payments.filter((p) => p.status === "SUCCEEDED");
     return {
       id: check.id,
       tableId: check.tableId,
@@ -44,6 +45,17 @@ export class ChecksService {
       status: check.status,
       notes: check.notes,
       createdAt: check.createdAt.toISOString(),
+      publicToken: check.publicToken,
+      tipCents: succeeded.reduce((acc, p) => acc + p.tipCents, 0),
+      payments: succeeded.map((p) => ({
+        id: p.id,
+        amountCents: p.amountCents,
+        tipCents: p.tipCents,
+        method: p.method,
+        status: p.status,
+        payerName: p.payerName,
+        createdAt: p.createdAt.toISOString(),
+      })),
       lines: check.lines.map((l) => ({
         id: l.id,
         menuItemId: l.menuItemId,
@@ -174,6 +186,73 @@ export class ChecksService {
     });
     this.events.emit(check.id);
     return this.toDetail(updated);
+  }
+
+  // ── Cobro manual en efectivo ─────────────────────────────────────
+
+  async recordCashPayment(
+    restaurantId: string,
+    checkId: string,
+    amountCents: number,
+    payerName?: string,
+  ): Promise<CheckDetail> {
+    const check = await this.checkOf(restaurantId, checkId);
+    if (check.status !== "OPEN" && check.status !== "PARTIALLY_PAID") {
+      throw new BadRequestException("La cuenta no admite pagos");
+    }
+    const totals = computeTotals(check.lines, check.payments);
+    if (amountCents > totals.remainingCents) {
+      throw new BadRequestException(
+        `Como máximo quedan ${(totals.remainingCents / 100).toFixed(2)} € por cobrar`,
+      );
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.payment.create({
+        data: {
+          checkId: check.id,
+          amountCents,
+          method: "CASH",
+          status: "SUCCEEDED",
+          payerName: payerName ?? null,
+        },
+      });
+      const newStatus = amountCents >= totals.remainingCents ? "PAID" : "PARTIALLY_PAID";
+      await tx.check.update({ where: { id: check.id }, data: { status: newStatus } });
+    });
+    this.events.emit(check.id);
+    return this.get(restaurantId, checkId);
+  }
+
+  // ── Historial ────────────────────────────────────────────────────
+
+  async history(restaurantId: string, from?: string, to?: string) {
+    const where: { restaurantId: string; createdAt?: { gte?: Date; lte?: Date } } = { restaurantId };
+    if (from || to) {
+      where.createdAt = {};
+      if (from) where.createdAt.gte = new Date(`${from}T00:00:00`);
+      if (to) where.createdAt.lte = new Date(`${to}T23:59:59.999`);
+    }
+    const checks = await this.prisma.check.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 300,
+      include: { lines: true, payments: true },
+    });
+    return checks.map((c) => {
+      const totals = computeTotals(c.lines, c.payments);
+      const succeeded = c.payments.filter((p) => p.status === "SUCCEEDED");
+      return {
+        id: c.id,
+        tableName: c.tableName,
+        status: c.status,
+        createdAt: c.createdAt.toISOString(),
+        closedAt: c.closedAt?.toISOString() ?? null,
+        totalCents: totals.totalCents,
+        paidCents: totals.paidCents,
+        tipCents: succeeded.reduce((acc, p) => acc + p.tipCents, 0),
+        paymentCount: succeeded.length,
+      };
+    });
   }
 
   // ── Líneas ───────────────────────────────────────────────────────
