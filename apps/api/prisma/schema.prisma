@@ -8,7 +8,6 @@ datasource db {
 }
 
 // Los modelos de dominio se añaden por fases (ver plan):
-// Fase 3: Zone, Table
 // Fase 4: Menu, MenuSchedule, MenuCategory, MenuItem, ItemModifierGroup, ItemModifier
 // Fase 5: ReservationShift, Reservation
 // Fase 7+: Check, CheckLine, PaymentIntentRecord, LineClaim
@@ -128,8 +127,41 @@ model Restaurant {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  zones Zone[]
+
   @@index([organizationId])
   @@map("restaurants")
+}
+
+// ─────────────────────── Sala: zonas y mesas ─────────────────────
+
+model Zone {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  tables Table[]
+
+  @@index([restaurantId])
+  @@map("zones")
+}
+
+model Table {
+  id        String   @id @default(cuid())
+  zoneId    String
+  zone      Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  name      String
+  capacity  Int      @default(2)
+  // Código corto inmutable impreso en el QR físico de la mesa (PAY_URL/t/{qrCode})
+  qrCode    String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([zoneId])
+  @@map("tables")
 }
 
 // Sesiones de refresh token (rotación + revocación en logout)

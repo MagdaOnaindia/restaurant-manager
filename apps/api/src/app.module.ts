@@ -6,6 +6,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { MailModule } from "./mail/mail.module";
 import { AuthModule } from "./auth/auth.module";
 import { OrgsModule } from "./orgs/orgs.module";
+import { TablesModule } from "./tables/tables.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -16,6 +17,7 @@ import { HealthController } from "./health/health.controller";
     MailModule,
     AuthModule,
     OrgsModule,
+    TablesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

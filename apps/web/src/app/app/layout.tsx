@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { ChefHat, LayoutDashboard, LogOut, Store, UserRound, Users } from "lucide-react";
+import { Armchair, ChefHat, LayoutDashboard, LogOut, Store, UserRound, Users } from "lucide-react";
 import { roleAtLeast } from "@rms/shared";
 import { useAuth } from "@/components/auth-provider";
 import { OrgProvider, useOrg } from "@/components/org-provider";
@@ -19,6 +19,7 @@ function Sidebar() {
 
   const nav = [
     { href: "/app", label: "Inicio", icon: LayoutDashboard, show: true },
+    { href: "/app/tables", label: "Mesas", icon: Armchair, show: true },
     {
       href: "/app/team",
       label: "Equipo",
@@ -29,7 +30,7 @@ function Sidebar() {
   ].filter((i) => i.show);
 
   return (
-    <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white">
+    <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white print:hidden">
       <div className="flex h-16 items-center gap-2 border-b border-neutral-200 px-5">
         <ChefHat className="h-5 w-5 text-brand-600" />
         <span className="font-semibold">Restaurant Manager</span>
@@ -83,7 +84,9 @@ function Sidebar() {
             href={href}
             className={clsx(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-              pathname === href ? "bg-brand-50 text-brand-800" : "text-neutral-600 hover:bg-neutral-100",
+              pathname === href || (href !== "/app" && pathname.startsWith(href))
+                ? "bg-brand-50 text-brand-800"
+                : "text-neutral-600 hover:bg-neutral-100",
             )}
           >
             <Icon className="h-4 w-4" />
