@@ -72,6 +72,49 @@ export class MailService {
     );
   }
 
+  async sendReservationConfirmation(
+    to: string,
+    data: {
+      customerName: string;
+      restaurantName: string;
+      date: string;
+      time: string;
+      partySize: number;
+      cancelToken: string;
+    },
+  ) {
+    const cancelLink = `${this.webUrl}/reservation/${data.cancelToken}`;
+    await this.send(
+      to,
+      `Reserva confirmada en ${data.restaurantName}`,
+      this.layout(
+        `¡Reserva confirmada, ${data.customerName}!`,
+        `<p>Te esperamos en <strong>${data.restaurantName}</strong>:</p>
+         <ul>
+           <li><strong>Fecha:</strong> ${data.date}</li>
+           <li><strong>Hora:</strong> ${data.time}</li>
+           <li><strong>Personas:</strong> ${data.partySize}</li>
+         </ul>
+         <p>Si no puedes venir, cancela aquí:<br><a href="${cancelLink}">${cancelLink}</a></p>`,
+      ),
+    );
+  }
+
+  async sendReservationCancelled(
+    to: string,
+    data: { customerName: string; restaurantName: string; date: string; time: string },
+  ) {
+    await this.send(
+      to,
+      `Reserva cancelada en ${data.restaurantName}`,
+      this.layout(
+        `Reserva cancelada`,
+        `<p>Hola, ${data.customerName}. Tu reserva en <strong>${data.restaurantName}</strong> del ${data.date} a las ${data.time} ha quedado cancelada.</p>
+         <p>Esperamos verte en otra ocasión.</p>`,
+      ),
+    );
+  }
+
   async sendPasswordResetEmail(to: string, name: string, token: string) {
     const link = `${this.webUrl}/reset-password?token=${token}`;
     await this.send(

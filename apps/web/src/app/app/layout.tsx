@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import {
   Armchair,
+  CalendarDays,
   ChefHat,
   LayoutDashboard,
   LogOut,
@@ -30,6 +31,7 @@ function Sidebar() {
     { href: "/app", label: "Inicio", icon: LayoutDashboard, show: true },
     { href: "/app/tables", label: "Mesas", icon: Armchair, show: true },
     { href: "/app/menus", label: "Cartas", icon: NotebookText, show: true },
+    { href: "/app/reservations", label: "Reservas", icon: CalendarDays, show: true },
     {
       href: "/app/team",
       label: "Equipo",

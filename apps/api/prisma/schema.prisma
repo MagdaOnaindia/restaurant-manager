@@ -8,8 +8,71 @@ datasource db {
 }
 
 // Los modelos de dominio se añaden por fases (ver plan):
-// Fase 5: ReservationShift, Reservation
 // Fase 7+: Check, CheckLine, PaymentIntentRecord, LineClaim
+
+// ───────────────────────── Reservas ──────────────────────────────
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationSource {
+  STAFF
+  PUBLIC
+}
+
+// Turno reservable ("Comida", "Cena") con aforo de entrada por franja (pacing).
+model ReservationShift {
+  id              String     @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name            String
+  // Días ISO 1-7; vacío = todos los días
+  daysOfWeek      Int[]      @default([])
+  startTime       String // "13:00" — primera hora de entrada
+  endTime         String // "15:30" — última hora de entrada
+  slotMinutes     Int        @default(15)
+  // Máximo de comensales que pueden ENTRAR en cada franja (pacing de cocina/sala)
+  maxCoversPerSlot Int       @default(20)
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+
+  reservations Reservation[]
+
+  @@index([restaurantId])
+  @@map("reservation_shifts")
+}
+
+model Reservation {
+  id            String            @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  shiftId       String?
+  shift         ReservationShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  date          DateTime          @db.Date
+  time          String // "HH:MM" hora local del restaurante
+  partySize     Int
+  customerName  String
+  customerPhone String?
+  customerEmail String?
+  notes         String?
+  tableId       String?
+  table         Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  status        ReservationStatus @default(CONFIRMED)
+  source        ReservationSource
+  // Token del enlace público de cancelación del email de confirmación
+  cancelToken   String            @unique
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([restaurantId, date])
+  @@map("reservations")
+}
 
 // ─────────────────────────── Identidad ───────────────────────────
 
@@ -126,8 +189,10 @@ model Restaurant {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  zones Zone[]
-  menus Menu[]
+  zones             Zone[]
+  menus             Menu[]
+  reservationShifts ReservationShift[]
+  reservations      Reservation[]
 
   @@index([organizationId])
   @@map("restaurants")
@@ -294,6 +359,8 @@ model Table {
   qrCode    String   @unique
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  reservations Reservation[]
 
   @@index([zoneId])
   @@map("tables")
