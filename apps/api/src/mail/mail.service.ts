@@ -57,6 +57,21 @@ export class MailService {
     );
   }
 
+  async sendInvitationEmail(to: string, orgName: string, inviterName: string, token: string) {
+    const link = `${this.webUrl}/invitation?token=${token}`;
+    await this.send(
+      to,
+      `${inviterName} te invita a ${orgName}`,
+      this.layout(
+        `Te han invitado a ${orgName}`,
+        `<p><strong>${inviterName}</strong> te ha invitado a unirte al equipo de <strong>${orgName}</strong> en Restaurant Manager.</p>
+         <p><a href="${link}" style="background:#c25620;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block;">Aceptar invitación</a></p>
+         <p>O copia este enlace en tu navegador:<br><a href="${link}">${link}</a></p>
+         <p>La invitación caduca en 7 días.</p>`,
+      ),
+    );
+  }
+
   async sendPasswordResetEmail(to: string, name: string, token: string) {
     const link = `${this.webUrl}/reset-password?token=${token}`;
     await this.send(

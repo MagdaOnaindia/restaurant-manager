@@ -209,6 +209,15 @@ export class AuthService {
     return toAuthUser(user);
   }
 
+  /**
+   * Emite tokens para un usuario ya validado por otra vía
+   * (p. ej. aceptación de invitación con creación de cuenta).
+   */
+  async issueTokensForUser(userId: string): Promise<{ user: AuthUser; tokens: IssuedTokens }> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    return { user: toAuthUser(user), tokens: await this.issueTokens(user) };
+  }
+
   // ── Tokens de un solo uso ────────────────────────────────────────
 
   private async createOneTimeToken(

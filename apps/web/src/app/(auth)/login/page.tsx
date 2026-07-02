@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { AuthUser } from "@rms/shared";
 import { apiPost, ApiError } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
-import { Alert, Button, Card, Field, Input } from "@/components/ui";
+import { Alert, Button, Card, Field, Input, Spinner } from "@/components/ui";
 
-export default function LoginPage() {
+function LoginInner() {
   const router = useRouter();
+  const params = useSearchParams();
+  // Solo aceptamos rutas internas como destino post-login
+  const rawNext = params.get("next");
+  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/app";
   const { setUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,7 @@ export default function LoginPage() {
         password: form.password,
       });
       setUser(user);
-      router.replace("/app");
+      router.replace(next);
     } catch (err) {
       if (err instanceof ApiError && err.code === "EMAIL_NOT_VERIFIED") {
         setNotVerified(true);
@@ -102,5 +106,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <LoginInner />
+    </Suspense>
   );
 }
