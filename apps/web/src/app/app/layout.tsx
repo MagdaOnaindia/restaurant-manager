@@ -4,7 +4,16 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Armchair, ChefHat, LayoutDashboard, LogOut, Store, UserRound, Users } from "lucide-react";
+import {
+  Armchair,
+  ChefHat,
+  LayoutDashboard,
+  LogOut,
+  NotebookText,
+  Store,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { roleAtLeast } from "@rms/shared";
 import { useAuth } from "@/components/auth-provider";
 import { OrgProvider, useOrg } from "@/components/org-provider";
@@ -20,6 +29,7 @@ function Sidebar() {
   const nav = [
     { href: "/app", label: "Inicio", icon: LayoutDashboard, show: true },
     { href: "/app/tables", label: "Mesas", icon: Armchair, show: true },
+    { href: "/app/menus", label: "Cartas", icon: NotebookText, show: true },
     {
       href: "/app/team",
       label: "Equipo",

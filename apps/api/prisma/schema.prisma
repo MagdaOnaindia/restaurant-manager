@@ -8,7 +8,6 @@ datasource db {
 }
 
 // Los modelos de dominio se añaden por fases (ver plan):
-// Fase 4: Menu, MenuSchedule, MenuCategory, MenuItem, ItemModifierGroup, ItemModifier
 // Fase 5: ReservationShift, Reservation
 // Fase 7+: Check, CheckLine, PaymentIntentRecord, LineClaim
 
@@ -128,9 +127,145 @@ model Restaurant {
   updatedAt      DateTime     @updatedAt
 
   zones Zone[]
+  menus Menu[]
 
   @@index([organizationId])
   @@map("restaurants")
+}
+
+// ─────────────────────── Cartas y menús ──────────────────────────
+
+enum MenuType {
+  A_LA_CARTE // carta normal: cada plato con su precio
+  FIXED_PRICE // menú del día / degustación: precio cerrado
+}
+
+enum MenuStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Los 14 alérgenos de declaración obligatoria en la UE
+enum Allergen {
+  GLUTEN
+  CRUSTACEANS
+  EGGS
+  FISH
+  PEANUTS
+  SOY
+  DAIRY
+  NUTS
+  CELERY
+  MUSTARD
+  SESAME
+  SULPHITES
+  LUPIN
+  MOLLUSCS
+}
+
+model Menu {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  type         MenuType   @default(A_LA_CARTE)
+  status       MenuStatus @default(DRAFT)
+  // Solo para FIXED_PRICE: precio del menú completo, en céntimos
+  priceCents   Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  categories MenuCategory[]
+  schedules  MenuSchedule[]
+
+  @@index([restaurantId])
+  @@map("menus")
+}
+
+// Vigencia temporal de un menú. Un menú sin vigencias está siempre activo.
+// Ejemplos: "Carta de verano" (dateFrom/dateTo), "Menú del día" (daysOfWeek 1-5 + franja horaria).
+model MenuSchedule {
+  id         String    @id @default(cuid())
+  menuId     String
+  menu       Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  dateFrom   DateTime? @db.Date
+  dateTo     DateTime? @db.Date
+  // Días ISO: 1=lunes … 7=domingo. Vacío = todos los días.
+  daysOfWeek Int[]     @default([])
+  // Franja horaria local del restaurante, formato "HH:MM". Null = todo el día.
+  timeFrom   String?
+  timeTo     String?
+
+  @@index([menuId])
+  @@map("menu_schedules")
+}
+
+model MenuCategory {
+  id          String  @id @default(cuid())
+  menuId      String
+  menu        Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  sortOrder   Int     @default(0)
+  // En menús de precio cerrado: cuántos platos elige el comensal en esta sección
+  choiceCount Int?
+
+  items MenuItem[]
+
+  @@index([menuId])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  categoryId  String
+  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  // En carta: precio del plato. En menú cerrado suele ser 0 (va incluido).
+  priceCents  Int        @default(0)
+  photoUrl    String?
+  allergens   Allergen[] @default([])
+  // Etiquetas libres: "vegano", "picante", "sin gluten"…
+  tags        String[]   @default([])
+  isAvailable Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  modifierGroups ItemModifierGroup[]
+
+  @@index([categoryId])
+  @@map("menu_items")
+}
+
+// Opciones de un plato ("Punto de la carne", "Extras"…)
+model ItemModifierGroup {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name      String
+  minSelect Int      @default(0)
+  maxSelect Int      @default(1)
+  sortOrder Int      @default(0)
+
+  modifiers ItemModifier[]
+
+  @@index([itemId])
+  @@map("item_modifier_groups")
+}
+
+model ItemModifier {
+  id         String            @id @default(cuid())
+  groupId    String
+  group      ItemModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  priceCents Int               @default(0)
+  sortOrder  Int               @default(0)
+
+  @@index([groupId])
+  @@map("item_modifiers")
 }
 
 // ─────────────────────── Sala: zonas y mesas ─────────────────────

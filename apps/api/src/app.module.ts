@@ -7,6 +7,8 @@ import { MailModule } from "./mail/mail.module";
 import { AuthModule } from "./auth/auth.module";
 import { OrgsModule } from "./orgs/orgs.module";
 import { TablesModule } from "./tables/tables.module";
+import { MenusModule } from "./menus/menus.module";
+import { UploadsModule } from "./uploads/uploads.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -18,6 +20,8 @@ import { HealthController } from "./health/health.controller";
     AuthModule,
     OrgsModule,
     TablesModule,
+    MenusModule,
+    UploadsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
