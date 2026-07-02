@@ -1,0 +1,17 @@
+{
+  "landing": {
+    "title": "Restaurant Manager",
+    "tagline": "La plataforma de gestión para tu restaurante o cadena",
+    "description": "Mesas, cartas, reservas y cobro dividido por QR, todo en un solo sitio.",
+    "login": "Iniciar sesión",
+    "register": "Crear cuenta"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver"
+  }
+}
