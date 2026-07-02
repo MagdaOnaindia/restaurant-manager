@@ -37,6 +37,12 @@ export class ChecksController {
     return { check: await this.checks.open(restaurantId, user.userId, body) };
   }
 
+  @Get("dashboard")
+  @OrgRoles("STAFF")
+  async dashboard(@Param("restaurantId") restaurantId: string) {
+    return this.checks.dashboard(restaurantId);
+  }
+
   @Get("checks-history")
   @OrgRoles("MANAGER")
   async history(

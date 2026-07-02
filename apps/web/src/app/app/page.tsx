@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Store } from "lucide-react";
-import { roleAtLeast } from "@rms/shared";
-import { apiPost, ApiError } from "@/lib/api";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { CalendarDays, HandCoins, Plus, Store, UtensilsCrossed } from "lucide-react";
+import { formatCents, roleAtLeast } from "@rms/shared";
+import { apiGet, apiPost, ApiError } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { useOrg } from "@/components/org-provider";
 import { Alert, Button, Card, Field, Input } from "@/components/ui";
 
+interface DashboardStats {
+  todayReservations: number;
+  openChecks: number;
+  openPendingCents: number;
+  todayPaidCents: number;
+  todayTipsCents: number;
+  todayPaymentCount: number;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { activeOrg, reload, setActiveRestaurantId } = useOrg();
+  const { activeOrg, activeRestaurant, reload, setActiveRestaurantId } = useOrg();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    setStats(null);
+    if (!activeRestaurant) return;
+    apiGet<DashboardStats>(`/restaurants/${activeRestaurant.id}/dashboard`)
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, [activeRestaurant]);
   const [showNew, setShowNew] = useState(false);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
@@ -52,6 +71,45 @@ export default function DashboardPage() {
           </Button>
         )}
       </div>
+
+      {stats && activeRestaurant && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Link href="/app/pos">
+            <Card className="h-full transition hover:border-brand-300 hover:shadow">
+              <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <UtensilsCrossed className="h-4 w-4" /> Cuentas abiertas
+              </div>
+              <div className="mt-1 text-2xl font-bold">{stats.openChecks}</div>
+              <div className="text-sm text-neutral-500">
+                {stats.openPendingCents > 0
+                  ? `${formatCents(stats.openPendingCents)} pendientes de cobro`
+                  : "Todo cobrado"}
+              </div>
+            </Card>
+          </Link>
+          <Link href="/app/reservations">
+            <Card className="h-full transition hover:border-brand-300 hover:shadow">
+              <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <CalendarDays className="h-4 w-4" /> Reservas hoy
+              </div>
+              <div className="mt-1 text-2xl font-bold">{stats.todayReservations}</div>
+              <div className="text-sm text-neutral-500">{activeRestaurant.name}</div>
+            </Card>
+          </Link>
+          <Link href="/app/history">
+            <Card className="h-full transition hover:border-brand-300 hover:shadow">
+              <div className="flex items-center gap-2 text-sm text-neutral-500">
+                <HandCoins className="h-4 w-4" /> Cobrado hoy
+              </div>
+              <div className="mt-1 text-2xl font-bold">{formatCents(stats.todayPaidCents)}</div>
+              <div className="text-sm text-neutral-500">
+                {stats.todayPaymentCount} pagos
+                {stats.todayTipsCents > 0 && ` · ${formatCents(stats.todayTipsCents)} propinas`}
+              </div>
+            </Card>
+          </Link>
+        </div>
+      )}
 
       {showNew && (
         <Card>

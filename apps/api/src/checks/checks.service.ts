@@ -223,6 +223,51 @@ export class ChecksService {
     return this.get(restaurantId, checkId);
   }
 
+  // ── Dashboard de inicio ──────────────────────────────────────────
+
+  async dashboard(restaurantId: string) {
+    const restaurant = await this.prisma.restaurant.findUnique({ where: { id: restaurantId } });
+    if (!restaurant) throw new NotFoundException("Restaurante no encontrado");
+    const { getZonedParts } = await import("@rms/shared");
+    const todayLocal = getZonedParts(new Date(), restaurant.timezone).date;
+
+    const [openChecks, reservations, recentPayments] = await Promise.all([
+      this.prisma.check.findMany({
+        where: { restaurantId, status: { in: [...LIVE_STATUSES] } },
+        include: { lines: true, payments: true },
+      }),
+      this.prisma.reservation.count({
+        where: {
+          restaurantId,
+          date: new Date(todayLocal),
+          status: { in: ["PENDING", "CONFIRMED", "SEATED"] },
+        },
+      }),
+      // Últimas 36h y se filtra por el día local del restaurante
+      this.prisma.payment.findMany({
+        where: {
+          status: "SUCCEEDED",
+          check: { restaurantId },
+          createdAt: { gte: new Date(Date.now() - 36 * 60 * 60 * 1000) },
+        },
+      }),
+    ]);
+
+    const todayPayments = recentPayments.filter(
+      (p) => getZonedParts(p.createdAt, restaurant.timezone).date === todayLocal,
+    );
+    const openTotals = openChecks.map((c) => computeTotals(c.lines, c.payments));
+
+    return {
+      todayReservations: reservations,
+      openChecks: openChecks.length,
+      openPendingCents: openTotals.reduce((acc, t) => acc + t.remainingCents, 0),
+      todayPaidCents: todayPayments.reduce((acc, p) => acc + p.amountCents, 0),
+      todayTipsCents: todayPayments.reduce((acc, p) => acc + p.tipCents, 0),
+      todayPaymentCount: todayPayments.length,
+    };
+  }
+
   // ── Historial ────────────────────────────────────────────────────
 
   async history(restaurantId: string, from?: string, to?: string) {
