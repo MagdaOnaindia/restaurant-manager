@@ -8,6 +8,7 @@ import {
   Armchair,
   CalendarDays,
   ChefHat,
+  Globe,
   LayoutDashboard,
   LogOut,
   NotebookText,
@@ -32,6 +33,12 @@ function Sidebar() {
     { href: "/app/tables", label: "Mesas", icon: Armchair, show: true },
     { href: "/app/menus", label: "Cartas", icon: NotebookText, show: true },
     { href: "/app/reservations", label: "Reservas", icon: CalendarDays, show: true },
+    {
+      href: "/app/settings",
+      label: "Mi página",
+      icon: Globe,
+      show: activeOrg ? roleAtLeast(activeOrg.role, "MANAGER") : false,
+    },
     {
       href: "/app/team",
       label: "Equipo",
