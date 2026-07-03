@@ -13,3 +13,6 @@ coverage/
 
 # uploads en desarrollo
 apps/api/uploads/
+
+# tokens locales de la cuenta demo
+scripts/demo-info.json

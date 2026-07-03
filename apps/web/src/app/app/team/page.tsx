@@ -88,7 +88,7 @@ export default function TeamPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold">Equipo</h1>
+      <h1 className="font-serif text-3xl font-semibold tracking-tight">Equipo</h1>
       {message && <Alert variant={message.ok ? "success" : "error"}>{message.text}</Alert>}
 
       <Card>

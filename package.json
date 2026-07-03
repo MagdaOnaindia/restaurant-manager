@@ -12,6 +12,7 @@
     "db:studio": "pnpm --filter @rms/api db:studio"
   },
   "devDependencies": {
+    "playwright": "^1.61.1",
     "turbo": "^2.5.0"
   },
   "engines": {

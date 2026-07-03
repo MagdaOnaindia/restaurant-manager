@@ -60,7 +60,7 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-10">
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">
+        <h1 className="font-serif text-3xl font-semibold tracking-tight">
           {step === 1 ? "Crea tu negocio" : "Tu primer restaurante"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">Paso {step} de 2</p>

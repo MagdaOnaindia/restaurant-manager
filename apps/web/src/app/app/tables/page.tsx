@@ -82,7 +82,7 @@ export default function TablesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Mesas · {activeRestaurant.name}</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">Mesas · {activeRestaurant.name}</h1>
           <p className="text-sm text-neutral-500">
             {zones.length} zonas · {totalTables} mesas
           </p>

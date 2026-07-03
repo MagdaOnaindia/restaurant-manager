@@ -152,7 +152,7 @@ export default function MenuEditorPage({ params }: { params: Promise<{ menuId: s
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">{menu.name}</h1>
+            <h1 className="font-serif text-3xl font-semibold tracking-tight">{menu.name}</h1>
             <p className="text-sm text-neutral-500">
               {menu.type === "FIXED_PRICE"
                 ? `Menú de precio cerrado · ${menu.priceCents != null ? formatCents(menu.priceCents) : "—"}`

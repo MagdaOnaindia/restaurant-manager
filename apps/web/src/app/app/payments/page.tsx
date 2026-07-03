@@ -65,7 +65,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Cobros · {activeOrg?.name}</h1>
+      <h1 className="font-serif text-3xl font-semibold tracking-tight">Cobros · {activeOrg?.name}</h1>
       {error && <Alert>{error}</Alert>}
 
       <Card>

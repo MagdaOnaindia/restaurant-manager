@@ -25,6 +25,40 @@ pnpm dev                        # api (4000) + web (3100) + pay (3001)
 
 Primeros pasos: regístrate en http://localhost:3100/register (el email de verificación llega a Mailpit: http://localhost:8025), crea tu organización y tu primer restaurante, añade zonas y mesas, crea una carta y publícala.
 
+### Cuenta demo
+
+Para explorar el producto con datos realistas sin crear nada a mano:
+
+```bash
+node scripts/seed-demo.mjs
+```
+
+Crea el restaurante **La Parrilla de Ana** (carta, menú del día, mesas, reservas de hoy y una
+cuenta a medio pagar por QR) y deja las credenciales listas:
+
+- Backoffice: http://localhost:3100/login — `demo@rms.local` / `demo1234`
+- Página pública: http://localhost:3100/r/la-parrilla-de-ana
+
+## Capturas
+
+| Portada | Panel del día |
+| --- | --- |
+| ![Landing](docs/screenshots/01-landing.png) | ![Dashboard](docs/screenshots/02-dashboard.png) |
+
+| Comandero (plano de sala) | Cuenta de una mesa |
+| --- | --- |
+| ![Comandero](docs/screenshots/03-comandero.png) | ![Cuenta](docs/screenshots/04-cuenta-mesa.png) |
+
+| Editor de carta | Reservas del día |
+| --- | --- |
+| ![Cartas](docs/screenshots/05-editor-carta.png) | ![Reservas](docs/screenshots/06-reservas.png) |
+
+| Página pública del restaurante | El comensal divide y paga (móvil) |
+| --- | --- |
+| ![Página pública](docs/screenshots/07-pagina-publica.png) | ![Comensal](docs/screenshots/08-comensal-cuenta.png) |
+
+Las capturas se regeneran con `node scripts/screenshots.mjs` (requiere la cuenta demo).
+
 ## Funcionalidades
 
 **Plataforma de gestión**
