@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
+import { Logo } from "@/components/logo";
 import {
   Armchair,
   CalendarDays,
-  ChefHat,
   CreditCard,
   Globe,
   History,
@@ -66,9 +66,10 @@ function Sidebar() {
 
   return (
     <aside className="flex w-64 flex-col border-r border-neutral-200 bg-white print:hidden">
-      <div className="flex h-16 items-center gap-2 border-b border-neutral-200 px-5">
-        <ChefHat className="h-5 w-5 text-brand-600" />
-        <span className="font-semibold">Restaurant Manager</span>
+      <div className="flex h-16 items-center border-b border-neutral-200 px-4">
+        <Link href="/app" aria-label="Inicio">
+          <Logo markClassName="h-7 w-7" className="[&_span]:text-base" />
+        </Link>
       </div>
 
       {activeOrg && (

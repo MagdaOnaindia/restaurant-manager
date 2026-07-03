@@ -157,7 +157,7 @@ export default function DinerCheckPage({ params }: { params: Promise<{ token: st
     <main className="mx-auto min-h-screen max-w-md px-4 pb-24 pt-6">
       {/* Cabecera */}
       <header className="mb-4 text-center">
-        <h1 className="text-xl font-bold">{view.restaurantName}</h1>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight">{view.restaurantName}</h1>
         <p className="text-sm text-neutral-500">{view.tableName}</p>
       </header>
 
@@ -500,6 +500,17 @@ export default function DinerCheckPage({ params }: { params: Promise<{ token: st
           </p>
         </section>
       ) : null}
+
+      <footer className="mt-10 flex items-center justify-center gap-1.5 text-xs text-neutral-400">
+        <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden>
+          <rect x="1" y="1" width="46" height="46" rx="12" fill="#c25620" />
+          <path d="M23 25 L36 25 A13 13 0 0 1 23 38 Z" fill="#fff7ed" transform="translate(1.2 1.2)" />
+          <path d="M23 25 L23 38 A13 13 0 0 1 10 25 Z" fill="#fff7ed" transform="translate(-1.2 1.2)" />
+          <path d="M23 25 L10 25 A13 13 0 0 1 23 12 Z" fill="#fff7ed" transform="translate(-1.2 -1.2)" />
+          <path d="M23 25 L23 12 A13 13 0 0 1 36 25 Z" fill="#ffd9a8" transform="translate(3.6 -3.6)" />
+        </svg>
+        Pago seguro con Restaurant Manager
+      </footer>
     </main>
   );
 }

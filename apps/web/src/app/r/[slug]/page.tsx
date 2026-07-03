@@ -68,8 +68,11 @@ export default async function PublicRestaurantPage({
   return (
     <main className="min-h-screen bg-neutral-50">
       {/* Portada */}
-      <header className="bg-gradient-to-b from-brand-700 to-brand-600 px-4 py-14 text-center text-white">
-        <h1 className="text-4xl font-bold tracking-tight">{restaurant.name}</h1>
+      <header className="bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 px-4 py-16 text-center text-white">
+        <p className="mb-3 text-sm uppercase tracking-[0.25em] text-brand-200">Restaurante</p>
+        <h1 className="font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+          {restaurant.name}
+        </h1>
         {restaurant.description && (
           <p className="mx-auto mt-3 max-w-xl text-brand-100">{restaurant.description}</p>
         )}
@@ -92,7 +95,7 @@ export default async function PublicRestaurantPage({
       <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
         {/* Carta vigente */}
         <section>
-          <h2 className="mb-4 text-2xl font-bold">Nuestra carta</h2>
+          <h2 className="mb-4 font-serif text-3xl font-semibold tracking-tight">Nuestra carta</h2>
           {menus.length === 0 ? (
             <p className="rounded-xl border border-neutral-200 bg-white p-6 text-neutral-500">
               Ahora mismo no hay ninguna carta publicada. Vuelve a consultar más tarde.
@@ -102,7 +105,7 @@ export default async function PublicRestaurantPage({
               {menus.map((menu) => (
                 <article key={menu.id} className="rounded-xl border border-neutral-200 bg-white p-6">
                   <div className="mb-4 flex items-baseline justify-between gap-3">
-                    <h3 className="text-xl font-bold">{menu.name}</h3>
+                    <h3 className="font-serif text-2xl font-semibold">{menu.name}</h3>
                     {menu.type === "FIXED_PRICE" && menu.priceCents != null && (
                       <span className="whitespace-nowrap rounded-full bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-800">
                         {formatCents(menu.priceCents, restaurant.currency)}

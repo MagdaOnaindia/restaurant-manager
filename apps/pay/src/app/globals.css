@@ -3,13 +3,32 @@
 @theme {
   --color-brand-50: #fdf6ef;
   --color-brand-100: #f9e8d8;
+  --color-brand-200: #f2cfaf;
+  --color-brand-300: #eab07d;
   --color-brand-400: #e08748;
   --color-brand-500: #d96f2a;
   --color-brand-600: #c25620;
   --color-brand-700: #a1421d;
   --color-brand-800: #82361e;
+
+  /* Neutros cálidos (stone) */
+  --color-neutral-50: #fafaf9;
+  --color-neutral-100: #f5f5f4;
+  --color-neutral-200: #e7e5e4;
+  --color-neutral-300: #d6d3d1;
+  --color-neutral-400: #a8a29e;
+  --color-neutral-500: #78716c;
+  --color-neutral-600: #57534e;
+  --color-neutral-700: #44403c;
+  --color-neutral-800: #292524;
+  --color-neutral-900: #1c1917;
+
+  --color-cream: #faf6f0;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 }
 
 body {
-  @apply bg-neutral-50 text-neutral-900 antialiased;
+  @apply bg-cream text-neutral-900 antialiased;
 }
