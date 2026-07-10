@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarCheck } from "lucide-react";
 import type { AvailabilitySlot } from "@rms/shared";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
 import { Alert, Button, Field, Input } from "@/components/ui";
@@ -60,9 +59,9 @@ export function ReservationWidget({
 
   if (done) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white p-6 text-center">
+      <div className="rounded-2xl border border-neutral-200/70 border-t-4 border-t-brand-600 bg-white p-6 text-center shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
         <div className="text-4xl">🎉</div>
-        <h3 className="mt-2 text-lg font-bold">¡Reserva confirmada!</h3>
+        <h3 className="mt-2 font-serif text-xl font-semibold">¡Reserva confirmada!</h3>
         <p className="mt-1 text-sm text-neutral-600">
           Te esperamos en {restaurantName} el {date} a las {time} ({partySize} pers.).
           {form.customerEmail && " Te hemos enviado la confirmación por email."}
@@ -72,10 +71,9 @@ export function ReservationWidget({
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-6">
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold">
-        <CalendarCheck className="h-5 w-5 text-brand-600" /> Reserva tu mesa
-      </h3>
+    <div className="rounded-2xl border border-neutral-200/70 border-t-4 border-t-brand-600 bg-white p-6 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+      <h3 className="mb-1 font-serif text-2xl font-semibold tracking-tight">Reserva tu mesa</h3>
+      <p className="mb-4 text-sm text-neutral-500">Confirmación al momento, sin llamadas.</p>
       <form onSubmit={submit} className="space-y-4">
         {error && <Alert>{error}</Alert>}
         <div className="flex gap-3">

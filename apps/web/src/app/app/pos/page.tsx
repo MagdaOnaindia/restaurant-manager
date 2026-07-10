@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Armchair } from "lucide-react";
+import { IconTables } from "@/components/icons";
 import { formatCents, type FloorZone } from "@rms/shared";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
 import { useOrg } from "@/components/org-provider";
@@ -87,18 +87,18 @@ export default function PosFloorPage() {
                   className={
                     check
                       ? check.status === "PAID"
-                        ? "rounded-xl border-2 border-green-500 bg-green-50 p-4 text-left transition hover:shadow"
+                        ? "rounded-2xl border-2 border-green-500 bg-green-50 p-4 text-left transition hover:shadow"
                         : check.status === "PARTIALLY_PAID"
-                          ? "rounded-xl border-2 border-amber-400 bg-amber-50 p-4 text-left transition hover:shadow"
-                          : "rounded-xl border-2 border-brand-400 bg-brand-50 p-4 text-left transition hover:shadow"
-                      : "rounded-xl border-2 border-dashed border-neutral-300 bg-white p-4 text-left transition hover:border-brand-300 hover:shadow"
+                          ? "rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-left transition hover:shadow"
+                          : "rounded-2xl border-2 border-brand-400 bg-brand-50 p-4 text-left transition hover:shadow"
+                      : "rounded-2xl border-2 border-dashed border-neutral-200 bg-white p-4 text-left transition hover:border-brand-300 hover:shadow"
                   }
                 >
                   <div className="flex items-center justify-between">
-                    <Armchair className={check ? "h-5 w-5 text-brand-700" : "h-5 w-5 text-neutral-300"} />
+                    <IconTables className={check ? "h-5 w-5 text-brand-700" : "h-5 w-5 text-neutral-300"} />
                     <span className="text-xs text-neutral-400">{table.capacity}p</span>
                   </div>
-                  <div className="mt-2 font-bold">{table.name}</div>
+                  <div className="mt-2 font-semibold">{table.name}</div>
                   <div className="text-sm text-neutral-600">
                     {check ? `${formatCents(check.totalCents)}${paidBadge}` : "Libre"}
                   </div>
