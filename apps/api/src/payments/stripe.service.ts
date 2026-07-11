@@ -81,7 +81,8 @@ export class StripeService {
   async createPaymentIntent(params: {
     amountCents: number;
     currency: string;
-    destinationAccountId: string;
+    /** null = cargo directo a la plataforma (solo desarrollo, sin Connect) */
+    destinationAccountId: string | null;
     applicationFeeCents: number;
     metadata: Record<string, string>;
     receiptEmail?: string;
@@ -91,8 +92,13 @@ export class StripeService {
         amount: params.amountCents,
         currency: params.currency.toLowerCase(),
         automatic_payment_methods: { enabled: true },
-        transfer_data: { destination: params.destinationAccountId },
-        application_fee_amount: params.applicationFeeCents || undefined,
+        transfer_data: params.destinationAccountId
+          ? { destination: params.destinationAccountId }
+          : undefined,
+        application_fee_amount:
+          params.destinationAccountId && params.applicationFeeCents
+            ? params.applicationFeeCents
+            : undefined,
         metadata: params.metadata,
         receipt_email: params.receiptEmail,
       }),

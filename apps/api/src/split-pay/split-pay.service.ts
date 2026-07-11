@@ -292,18 +292,25 @@ export class SplitPayService {
         clientSecret: "demo_secret",
       };
     } else {
-      const org = await this.prisma.organization.findUniqueOrThrow({
-        where: { id: check.restaurant.organizationId },
-      });
-      if (!org.stripeAccountId || !org.stripeChargesEnabled) {
-        throw new BadRequestException(
-          "El restaurante aún no tiene los cobros online activados. Pide la cuenta al personal.",
-        );
+      // STRIPE_DIRECT_CHARGES=true (solo desarrollo): cobra a la cuenta de la
+      // plataforma sin Connect, para probar tarjetas antes de activar Connect.
+      const directCharges = this.config.get("STRIPE_DIRECT_CHARGES") === "true";
+      let destinationAccountId: string | null = null;
+      if (!directCharges) {
+        const org = await this.prisma.organization.findUniqueOrThrow({
+          where: { id: check.restaurant.organizationId },
+        });
+        if (!org.stripeAccountId || !org.stripeChargesEnabled) {
+          throw new BadRequestException(
+            "El restaurante aún no tiene los cobros online activados. Pide la cuenta al personal.",
+          );
+        }
+        destinationAccountId = org.stripeAccountId;
       }
       stripeIntent = await this.stripe.createPaymentIntent({
         amountCents: amountCents + input.tipCents,
         currency: check.restaurant.currency,
-        destinationAccountId: org.stripeAccountId,
+        destinationAccountId,
         applicationFeeCents: 0,
         metadata: { checkId: check.id, mode: input.mode },
         receiptEmail: input.receiptEmail,
