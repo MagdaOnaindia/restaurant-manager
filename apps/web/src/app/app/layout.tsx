@@ -134,7 +134,7 @@ function Sidebar() {
             </select>
           ) : (
             activeRestaurant && (
-              <div className="truncate px-1 font-serif text-[1.05rem] font-semibold text-neutral-900">
+              <div className="truncate px-1 text-[0.95rem] font-semibold text-neutral-900">
                 {activeRestaurant.name}
               </div>
             )

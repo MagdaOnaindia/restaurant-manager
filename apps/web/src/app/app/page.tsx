@@ -5,7 +5,6 @@ import Link from "next/link";
 import { CalendarDays, HandCoins, Plus, Store, UtensilsCrossed } from "lucide-react";
 import { formatCents, roleAtLeast } from "@rms/shared";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
-import { useAuth } from "@/components/auth-provider";
 import { useOrg } from "@/components/org-provider";
 import { Alert, Button, Card, Field, Input } from "@/components/ui";
 
@@ -19,7 +18,6 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const { activeOrg, activeRestaurant, reload, setActiveRestaurantId } = useOrg();
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
@@ -62,8 +60,18 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight">Hola, {user?.name} 👋</h1>
-          <p className="text-sm text-neutral-500">{activeOrg?.name}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Resumen del día</h1>
+          <p className="text-sm text-neutral-500">
+            {(() => {
+              const s = new Date().toLocaleDateString("es-ES", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              });
+              return s.charAt(0).toUpperCase() + s.slice(1);
+            })()}
+            {activeOrg && <> · {activeOrg.name}</>}
+          </p>
         </div>
         {canManage && (
           <Button onClick={() => setShowNew((v) => !v)}>
@@ -79,7 +87,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-sm text-neutral-500">
                 <UtensilsCrossed className="h-4 w-4" /> Cuentas abiertas
               </div>
-              <div className="mt-1 font-serif text-3xl font-semibold tracking-tight">{stats.openChecks}</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{stats.openChecks}</div>
               <div className="text-sm text-neutral-500">
                 {stats.openPendingCents > 0
                   ? `${formatCents(stats.openPendingCents)} pendientes de cobro`
@@ -92,7 +100,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-sm text-neutral-500">
                 <CalendarDays className="h-4 w-4" /> Reservas hoy
               </div>
-              <div className="mt-1 font-serif text-3xl font-semibold tracking-tight">{stats.todayReservations}</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{stats.todayReservations}</div>
               <div className="text-sm text-neutral-500">{activeRestaurant.name}</div>
             </Card>
           </Link>
@@ -101,7 +109,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 text-sm text-neutral-500">
                 <HandCoins className="h-4 w-4" /> Cobrado hoy
               </div>
-              <div className="mt-1 font-serif text-3xl font-semibold tracking-tight">{formatCents(stats.todayPaidCents)}</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{formatCents(stats.todayPaidCents)}</div>
               <div className="text-sm text-neutral-500">
                 {stats.todayPaymentCount} pagos
                 {stats.todayTipsCents > 0 && ` · ${formatCents(stats.todayTipsCents)} propinas`}

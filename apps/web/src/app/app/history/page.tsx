@@ -78,7 +78,7 @@ export default function HistoryPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight">Historial de cuentas · {activeRestaurant.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Historial de cuentas · {activeRestaurant.name}</h1>
           {entries && (
             <p className="text-sm text-neutral-500">
               {entries.length} cuentas · cobrado {formatCents(totals.paid)} · propinas{" "}

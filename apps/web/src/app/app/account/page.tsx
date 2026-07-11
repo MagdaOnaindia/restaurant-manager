@@ -61,7 +61,7 @@ export default function AccountPage() {
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="font-serif text-3xl font-semibold tracking-tight">Mi cuenta</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Mi cuenta</h1>
 
       <Card>
         <h2 className="mb-4 text-lg font-semibold">Perfil</h2>

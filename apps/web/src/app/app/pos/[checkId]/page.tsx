@@ -82,7 +82,7 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="font-serif text-3xl font-semibold tracking-tight">{check.tableName}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{check.tableName}</h1>
             <p className="text-sm text-neutral-500">{CHECK_STATUS_LABELS_ES[check.status]}</p>
           </div>
         </div>
