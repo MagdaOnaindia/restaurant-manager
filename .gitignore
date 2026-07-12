@@ -14,5 +14,6 @@ coverage/
 # uploads en desarrollo
 apps/api/uploads/
 
-# tokens locales de la cuenta demo
+# tokens y artefactos locales de scripts (cuenta demo, enlaces de onboarding…)
 scripts/demo-info.json
+scripts/_*.txt
