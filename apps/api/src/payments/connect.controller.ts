@@ -25,7 +25,7 @@ export class ConnectController {
     };
   }
 
-  /** Crea (si hace falta) la cuenta Connect y devuelve el enlace de onboarding. */
+  /** Creates the Connect account (if needed) and returns the onboarding link. */
   @Post("onboarding-link")
   @HttpCode(200)
   @OrgRoles("OWNER")
@@ -50,7 +50,7 @@ export class ConnectController {
     return { url };
   }
 
-  /** Re-sincroniza el estado de la cuenta (por si el webhook no llegó en dev). */
+  /** Re-syncs the account status (in case the webhook didn't arrive in dev). */
   @Post("sync")
   @HttpCode(200)
   @OrgRoles("ADMIN")

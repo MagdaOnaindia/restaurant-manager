@@ -23,7 +23,7 @@ export const updateRestaurantSchema = createRestaurantSchema.partial().extend({
 });
 export type UpdateRestaurantInput = z.infer<typeof updateRestaurantSchema>;
 
-/** Roles que se pueden asignar por invitación (OWNER solo se crea con la organización). */
+/** Roles assignable by invitation (OWNER is only created together with the organization). */
 export const INVITABLE_ROLES = ["ADMIN", "MANAGER", "STAFF"] as const satisfies readonly OrgRole[];
 
 export const inviteMemberSchema = z.object({
@@ -49,7 +49,7 @@ export const acceptInvitationNewUserSchema = z.object({
 });
 export type AcceptInvitationNewUserInput = z.infer<typeof acceptInvitationNewUserSchema>;
 
-// ── Tipos de respuesta de la API ────────────────────────────────────
+// ── API response types ──────────────────────────────────────────────
 
 export interface RestaurantSummary {
   id: string;
@@ -106,7 +106,7 @@ export interface RestaurantDetail {
   isPublic: boolean;
 }
 
-/** Jerarquía de roles: nivel mayor = más permisos. */
+/** Role hierarchy: higher level = more permissions. */
 export const ORG_ROLE_LEVEL: Record<OrgRole, number> = {
   OWNER: 4,
   ADMIN: 3,

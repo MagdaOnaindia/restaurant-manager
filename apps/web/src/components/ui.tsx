@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 import { Loader2 } from "lucide-react";
 import { forwardRef } from "react";
 
-// Primitivas de UI compartidas del backoffice (estilo shadcn simplificado).
+// Shared back-office UI primitives (simplified shadcn style).
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 

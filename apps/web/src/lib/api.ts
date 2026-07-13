@@ -37,14 +37,14 @@ async function toApiError(res: Response): Promise<ApiError> {
     code = body.code;
     errors = body.errors;
   } catch {
-    /* respuesta sin JSON */
+    /* response without JSON */
   }
   return new ApiError(res.status, message, code, errors);
 }
 
 /**
- * Llama a la API con cookies. Si el access token ha caducado (401),
- * intenta renovar la sesión una vez con el refresh token y reintenta.
+ * Calls the API with cookies. If the access token has expired (401),
+ * it tries to renew the session once with the refresh token and retries.
  */
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let res = await rawRequest(path, init);

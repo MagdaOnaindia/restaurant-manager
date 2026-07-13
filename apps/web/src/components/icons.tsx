@@ -1,6 +1,6 @@
 /**
- * Familia de iconos propia de Restaurant Manager.
- * Estilo: trazo 1.7, esquinas redondeadas, 24×24, con guiños de hostelería.
+ * Restaurant Manager's own icon family.
+ * Style: 1.7 stroke, rounded corners, 24×24, with hospitality touches.
  */
 
 type IconProps = React.SVGProps<SVGSVGElement>;
@@ -18,7 +18,7 @@ function base(props: IconProps) {
   };
 }
 
-/** Inicio: casita con toldo de local. */
+/** Home: little house with a shop awning. */
 export function IconHome(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -29,7 +29,7 @@ export function IconHome(props: IconProps) {
   );
 }
 
-/** Comandero: libreta de comandas con lápiz. */
+/** Waiter view: order pad with a pencil. */
 export function IconPos(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -41,7 +41,7 @@ export function IconPos(props: IconProps) {
   );
 }
 
-/** Mesas: mesa redonda vista desde arriba con dos sillas. */
+/** Tables: round table seen from above with two chairs. */
 export function IconTables(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -52,7 +52,7 @@ export function IconTables(props: IconProps) {
   );
 }
 
-/** Cartas: carta de restaurante abierta con platos. */
+/** Menus: an open restaurant menu with dishes. */
 export function IconMenus(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -63,7 +63,7 @@ export function IconMenus(props: IconProps) {
   );
 }
 
-/** Reservas: calendario con cubierto. */
+/** Reservations: calendar with cutlery. */
 export function IconReservations(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -75,7 +75,7 @@ export function IconReservations(props: IconProps) {
   );
 }
 
-/** Mi página: fachada de local con toldo. */
+/** My page: storefront with an awning. */
 export function IconStorefront(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -87,7 +87,7 @@ export function IconStorefront(props: IconProps) {
   );
 }
 
-/** Historial: reloj de sobremesa. */
+/** History: desk clock. */
 export function IconHistory(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -98,7 +98,7 @@ export function IconHistory(props: IconProps) {
   );
 }
 
-/** Cobros: tarjeta con ondas contactless. */
+/** Payments: card with contactless waves. */
 export function IconPayments(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -110,7 +110,7 @@ export function IconPayments(props: IconProps) {
   );
 }
 
-/** Equipo: dos personas, una con gorro de cocina. */
+/** Team: two people, one wearing a chef's hat. */
 export function IconTeam(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -123,7 +123,7 @@ export function IconTeam(props: IconProps) {
   );
 }
 
-/** Mi cuenta. */
+/** My account. */
 export function IconAccount(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -133,7 +133,7 @@ export function IconAccount(props: IconProps) {
   );
 }
 
-/** Cerrar sesión: puerta con flecha. */
+/** Log out: door with an arrow. */
 export function IconLogout(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -143,7 +143,7 @@ export function IconLogout(props: IconProps) {
   );
 }
 
-/** Cuentas abiertas: campana de cocina (cloche). */
+/** Open bills: kitchen cloche. */
 export function IconCloche(props: IconProps) {
   return (
     <svg {...base(props)}>
@@ -155,7 +155,7 @@ export function IconCloche(props: IconProps) {
   );
 }
 
-/** Propinas / cobrado: hucha-moneda. */
+/** Tips / collected: coin. */
 export function IconCoins(props: IconProps) {
   return (
     <svg {...base(props)}>

@@ -3,8 +3,8 @@ import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 
 /**
- * Envoltorio del SDK de Stripe. Toda la plataforma habla con Stripe a través
- * de este servicio, lo que permite sustituirlo por un stub en los tests.
+ * Wrapper around the Stripe SDK. The whole platform talks to Stripe through
+ * this service, which makes it easy to swap for a stub in tests.
  */
 @Injectable()
 export class StripeService {
@@ -30,7 +30,7 @@ export class StripeService {
     return this.client;
   }
 
-  /** Errores del SDK → 400 con mensaje útil (nunca se propaga el status de Stripe). */
+  /** SDK errors → 400 with a helpful message (Stripe's status is never propagated). */
   private async call<T>(action: string, fn: () => Promise<T>): Promise<T> {
     try {
       return await fn();
@@ -41,7 +41,7 @@ export class StripeService {
     }
   }
 
-  /** Crea una cuenta Connect Express (España) para la organización. */
+  /** Creates a Connect Express account (Spain) for the organization. */
   async createExpressAccount(orgName: string): Promise<string> {
     const account = await this.call("crear la cuenta de cobros", () =>
       this.stripe.accounts.create({
@@ -57,7 +57,7 @@ export class StripeService {
     return account.id;
   }
 
-  /** Enlace de onboarding hospedado por Stripe. */
+  /** Stripe-hosted onboarding link. */
   async createAccountLink(accountId: string, returnUrl: string, refreshUrl: string): Promise<string> {
     const link = await this.call("generar el enlace de onboarding", () =>
       this.stripe.accountLinks.create({
@@ -75,13 +75,13 @@ export class StripeService {
   }
 
   /**
-   * PaymentIntent con destination charge: el comensal paga a la plataforma y
-   * los fondos van a la cuenta conectada del restaurante (Fase 9).
+   * PaymentIntent with a destination charge: the diner pays the platform and
+   * the funds go to the restaurant's connected account (Phase 9).
    */
   async createPaymentIntent(params: {
     amountCents: number;
     currency: string;
-    /** null = cargo directo a la plataforma (solo desarrollo, sin Connect) */
+    /** null = direct charge to the platform (dev only, no Connect) */
     destinationAccountId: string | null;
     applicationFeeCents: number;
     metadata: Record<string, string>;
@@ -110,7 +110,7 @@ export class StripeService {
     return { id: intent.id, clientSecret: intent.client_secret };
   }
 
-  /** Verifica la firma del webhook y devuelve el evento. */
+  /** Verifies the webhook signature and returns the event. */
   constructWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {
     const secret = this.config.get<string>("STRIPE_WEBHOOK_SECRET");
     if (!secret) {

@@ -13,7 +13,7 @@ import { shortCode } from "../common/slug";
 export class TablesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── Zonas ────────────────────────────────────────────────────────
+  // ── Zones ────────────────────────────────────────────────────────
 
   async listZones(restaurantId: string): Promise<ZoneWithTables[]> {
     const zones = await this.prisma.zone.findMany({
@@ -62,7 +62,7 @@ export class TablesService {
     return { ok: true };
   }
 
-  // ── Mesas ────────────────────────────────────────────────────────
+  // ── Tables ───────────────────────────────────────────────────────
 
   private async uniqueQrCode(): Promise<string> {
     for (let attempt = 0; attempt < 10; attempt++) {

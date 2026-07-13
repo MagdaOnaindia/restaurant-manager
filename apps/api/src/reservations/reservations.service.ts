@@ -14,11 +14,11 @@ import type { Reservation, ReservationShift, Restaurant } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 
-/** Estados que consumen aforo. */
+/** Statuses that consume capacity. */
 const ACTIVE_STATUSES = ["PENDING", "CONFIRMED", "SEATED"] as const;
 
 function isoDayOf(dateStr: string): number {
-  // Día ISO (1=lunes) de una fecha AAAA-MM-DD, sin efectos de zona horaria
+  // ISO day (1=Monday) of a YYYY-MM-DD date, with no timezone effects
   const day = new Date(`${dateStr}T00:00:00Z`).getUTCDay();
   return day === 0 ? 7 : day;
 }
@@ -50,7 +50,7 @@ export class ReservationsService {
     private readonly mail: MailService,
   ) {}
 
-  // ── Turnos ───────────────────────────────────────────────────────
+  // ── Shifts ───────────────────────────────────────────────────────
 
   async listShifts(restaurantId: string) {
     return this.prisma.reservationShift.findMany({
@@ -80,11 +80,11 @@ export class ReservationsService {
     return { ok: true };
   }
 
-  // ── Disponibilidad ───────────────────────────────────────────────
+  // ── Availability ─────────────────────────────────────────────────
 
   /**
-   * Huecos de entrada de un día. El aforo es "pacing": cada franja admite
-   * hasta maxCoversPerSlot comensales de entrada; los estados activos consumen.
+   * Arrival slots for a day. Capacity is "pacing": each slot allows up to
+   * maxCoversPerSlot arriving diners; active statuses consume it.
    */
   async availability(
     restaurant: Restaurant,
@@ -112,7 +112,7 @@ export class ReservationsService {
     });
     const coversByTime = new Map(reservations.map((r) => [r.time, r._sum.partySize ?? 0]));
 
-    // Si es hoy (en hora local del restaurante), no ofrecer horas pasadas
+    // If it's today (in the restaurant's local time), don't offer past times
     const local = getZonedParts(now, restaurant.timezone);
     const isToday = local.date === dateStr;
 
@@ -150,7 +150,7 @@ export class ReservationsService {
     );
   }
 
-  // ── Crear reservas ───────────────────────────────────────────────
+  // ── Creating reservations ────────────────────────────────────────
 
   async createPublic(slug: string, input: PublicReservationInput) {
     const restaurant = await this.prisma.restaurant.findUnique({ where: { slug } });
@@ -222,7 +222,7 @@ export class ReservationsService {
     return toInfo(reservation);
   }
 
-  // ── Gestión de reservas (backoffice) ─────────────────────────────
+  // ── Reservation management (back office) ─────────────────────────
 
   async listByDate(restaurantId: string, dateStr: string): Promise<ReservationInfo[]> {
     const reservations = await this.prisma.reservation.findMany({
@@ -246,7 +246,7 @@ export class ReservationsService {
     return toInfo(updated);
   }
 
-  // ── Cancelación pública ──────────────────────────────────────────
+  // ── Public cancellation ──────────────────────────────────────────
 
   private async byCancelToken(token: string) {
     const reservation = await this.prisma.reservation.findUnique({

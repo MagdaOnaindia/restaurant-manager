@@ -29,7 +29,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Cobro mixto e historial (e2e)", () => {
+describe("Mixed payment and history (e2e)", () => {
   let app: INestApplication;
   let mail: MailStub;
   let prisma: PrismaService;
@@ -40,7 +40,9 @@ describe("Cobro mixto e historial (e2e)", () => {
   let checkToken: string;
 
   beforeAll(async () => {
-    delete process.env.STRIPE_SECRET_KEY; // modo demo
+    // Demo mode. Set to "" (not delete) so it wins over any value in a local .env file.
+    process.env.STRIPE_SECRET_KEY = "";
+    process.env.STRIPE_DIRECT_CHARGES = "";
 
     mail = new MailStub();
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -106,8 +108,8 @@ describe("Cobro mixto e historial (e2e)", () => {
     await app.close();
   });
 
-  it("cobro mixto: parte por QR (con recibo por email) y el resto en efectivo", async () => {
-    // Comensal paga 10,00 por QR con recibo
+  it("mixed payment: part via QR (with email receipt) and the rest in cash", async () => {
+    // Diner pays 10,00 via QR with a receipt
     const intent = await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({
@@ -123,14 +125,14 @@ describe("Cobro mixto e historial (e2e)", () => {
       .expect(200);
     expect(mail.receipts).toEqual([{ to: "cliente@test.local", amountCents: 1000 }]);
 
-    // Efectivo por encima de lo pendiente → 400
+    // Cash above the remaining balance → 400
     await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/cash-payment`)
       .set("Cookie", cookies)
       .send({ amountCents: 2500 })
       .expect(400);
 
-    // El resto (20,00) en efectivo → la cuenta queda PAGADA
+    // The rest (20,00) in cash → the bill becomes PAID
     const res = await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/cash-payment`)
       .set("Cookie", cookies)
@@ -141,7 +143,7 @@ describe("Cobro mixto e historial (e2e)", () => {
     expect(res.body.check.payments).toHaveLength(2);
   });
 
-  it("se cierra y aparece en el historial con totales y propinas", async () => {
+  it("closes and appears in the history with totals and tips", async () => {
     await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/close`)
       .set("Cookie", cookies)

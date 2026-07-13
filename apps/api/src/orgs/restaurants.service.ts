@@ -27,7 +27,7 @@ export class RestaurantsService {
   private async uniqueSlug(name: string): Promise<string> {
     const base = slugify(name) || "restaurante";
     let candidate = base;
-    // Reintenta con sufijo aleatorio hasta encontrar hueco
+    // Retry with a random suffix until a free slug is found
     for (let attempt = 0; attempt < 10; attempt++) {
       const existing = await this.prisma.restaurant.findUnique({ where: { slug: candidate } });
       if (!existing) return candidate;

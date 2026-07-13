@@ -30,7 +30,7 @@ export default function DinerCheckPage({ params }: { params: Promise<{ token: st
   const [step, setStep] = useState<Step>({ name: "summary" });
   const [sessionId, setSessionId] = useState("");
 
-  // Selecciones
+  // Selections
   const [itemUnits, setItemUnits] = useState<Record<string, number>>({});
   const [shares, setShares] = useState({ total: 2, pay: 1 });
   const [amountInput, setAmountInput] = useState("");
@@ -58,7 +58,7 @@ export default function DinerCheckPage({ params }: { params: Promise<{ token: st
     void reload();
   }, [reload]);
 
-  // Tiempo real: cualquier cambio en la cuenta refresca la vista
+  // Real time: any change to the bill refreshes the view
   useEffect(() => {
     if (!sessionId) return;
     const es = new EventSource(`${API_URL}/pay/checks/${token}/events`);

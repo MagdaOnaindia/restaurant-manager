@@ -1,8 +1,8 @@
 import { clsx } from "clsx";
 
 /**
- * Logomark de Restaurant Manager: un plato visto desde arriba partido en
- * cuartos, con una porción separada — "cada uno paga lo suyo".
+ * Restaurant Manager logomark: a plate seen from above split into
+ * quarters, with one wedge pulled out — "everyone pays their share".
  */
 export function Logomark({ className }: { className?: string }) {
   return (

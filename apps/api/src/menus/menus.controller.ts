@@ -31,7 +31,7 @@ function parseAt(at?: string): Date | undefined {
 export class MenusController {
   constructor(private readonly menus: MenusService) {}
 
-  // ── Menús ────────────────────────────────────────────────────────
+  // ── Menus ────────────────────────────────────────────────────────
 
   @Get("menus")
   @OrgRoles("STAFF")
@@ -92,7 +92,7 @@ export class MenusController {
     return { menu: await this.menus.setSchedules(restaurantId, menuId, body.schedules) };
   }
 
-  // ── Categorías ───────────────────────────────────────────────────
+  // ── Categories ───────────────────────────────────────────────────
 
   @Post("menus/:menuId/categories")
   @OrgRoles("MANAGER")
@@ -123,7 +123,7 @@ export class MenusController {
     return this.menus.removeCategory(restaurantId, categoryId);
   }
 
-  // ── Platos ───────────────────────────────────────────────────────
+  // ── Dishes ───────────────────────────────────────────────────────
 
   @Post("categories/:categoryId/items")
   @OrgRoles("MANAGER")

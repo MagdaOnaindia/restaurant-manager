@@ -4,7 +4,7 @@ import { OrgsModule } from "../orgs/orgs.module";
 import { StripeService } from "./stripe.service";
 import { ConnectController } from "./connect.controller";
 
-// El receptor de webhooks vive en SplitPayModule (necesita SplitPayService).
+// The webhook receiver lives in SplitPayModule (it needs SplitPayService).
 @Module({
   imports: [AuthModule, OrgsModule],
   controllers: [ConnectController],

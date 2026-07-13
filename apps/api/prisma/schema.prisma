@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ──────────────── Cuentas de mesa (Proyecto B) ───────────────────
+// ──────────────── Table bills (Project B) ────────────────────────
 
 enum CheckStatus {
   OPEN
@@ -17,17 +17,17 @@ enum CheckStatus {
   CANCELLED
 }
 
-// La cuenta de una mesa. Solo puede haber una abierta por mesa.
+// A table's bill. Only one can be open per table at a time.
 model Check {
   id           String      @id @default(cuid())
   restaurantId String
   restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId      String?
   table        Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  // Snapshot del nombre de la mesa (sobrevive a borrados/renombres)
+  // Snapshot of the table name (survives deletes/renames)
   tableName    String
   status       CheckStatus @default(OPEN)
-  // Acceso anónimo de los comensales desde el QR (Fase 9)
+  // Anonymous diner access from the QR (Phase 9)
   publicToken  String      @unique
   notes        String?
   openedById   String?
@@ -44,7 +44,7 @@ model Check {
   @@map("checks")
 }
 
-// Línea de la cuenta con snapshot de nombre y precio (la carta puede cambiar).
+// Bill line with a name and price snapshot (the menu can change).
 model CheckLine {
   id             String    @id @default(cuid())
   checkId        String
@@ -54,7 +54,7 @@ model CheckLine {
   name           String
   unitPriceCents Int
   quantity       Int       @default(1)
-  // Unidades ya pagadas en el reparto por ítems (Fase 9)
+  // Units already paid in the item-level split (Phase 9)
   paidUnits      Int       @default(0)
   notes          String?
   createdAt      DateTime  @default(now())
@@ -65,7 +65,7 @@ model CheckLine {
   @@map("check_lines")
 }
 
-// ───────────────── Pagos del cobro dividido ──────────────────────
+// ───────────────── Split-payment records ─────────────────────────
 
 enum PaymentStatus {
   PENDING
@@ -79,12 +79,12 @@ enum PaymentMethod {
   CASH
 }
 
-// Espejo de cada intento de pago (Stripe PaymentIntent o cobro manual en efectivo).
+// Mirror of every payment attempt (Stripe PaymentIntent or a manual cash charge).
 model Payment {
   id                    String        @id @default(cuid())
   checkId               String
   check                 Check         @relation(fields: [checkId], references: [id], onDelete: Cascade)
-  // Importe que cubre cuenta (SIN propina), en céntimos
+  // Amount that covers the bill (WITHOUT tip), in cents
   amountCents           Int
   tipCents              Int           @default(0)
   status                PaymentStatus @default(PENDING)
@@ -92,7 +92,7 @@ model Payment {
   stripePaymentIntentId String?       @unique
   payerName             String?
   receiptEmail          String?
-  // Qué cubre: { mode, shares?: {total,pay}, claims?: [{lineId, units}] }
+  // What it covers: { mode, shares?: {total,pay}, claims?: [{lineId, units}] }
   coverage              Json?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
@@ -101,18 +101,18 @@ model Payment {
   @@map("payments")
 }
 
-// Reserva temporal de unidades de línea durante el reparto por ítems:
-// evita que dos comensales paguen el mismo plato a la vez.
+// Temporary reservation of line units during the item-level split:
+// prevents two diners from paying for the same dish at the same time.
 model LineClaim {
   id        String    @id @default(cuid())
   checkId   String
   check     Check     @relation(fields: [checkId], references: [id], onDelete: Cascade)
   lineId    String
   line      CheckLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
-  // Sesión anónima del comensal (cookie/localStorage)
+  // Anonymous diner session (cookie/localStorage)
   sessionId String
   units     Int
-  // Se vincula al pago cuando el comensal inicia el cobro
+  // Linked to the payment when the diner starts checkout
   paymentId String?
   expiresAt DateTime
   createdAt DateTime  @default(now())
@@ -122,7 +122,7 @@ model LineClaim {
   @@map("line_claims")
 }
 
-// ───────────────────────── Reservas ──────────────────────────────
+// ───────────────────────── Reservations ──────────────────────────
 
 enum ReservationStatus {
   PENDING
@@ -138,18 +138,18 @@ enum ReservationSource {
   PUBLIC
 }
 
-// Turno reservable ("Comida", "Cena") con aforo de entrada por franja (pacing).
+// Bookable shift ("Lunch", "Dinner") with per-slot arrival capacity (pacing).
 model ReservationShift {
   id              String     @id @default(cuid())
   restaurantId    String
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name            String
-  // Días ISO 1-7; vacío = todos los días
+  // ISO days 1-7; empty = every day
   daysOfWeek      Int[]      @default([])
-  startTime       String // "13:00" — primera hora de entrada
-  endTime         String // "15:30" — última hora de entrada
+  startTime       String // "13:00" — first arrival time
+  endTime         String // "15:30" — last arrival time
   slotMinutes     Int        @default(15)
-  // Máximo de comensales que pueden ENTRAR en cada franja (pacing de cocina/sala)
+  // Max diners that can ARRIVE in each slot (kitchen/floor pacing)
   maxCoversPerSlot Int       @default(20)
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())
@@ -167,7 +167,7 @@ model Reservation {
   shiftId       String?
   shift         ReservationShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
   date          DateTime          @db.Date
-  time          String // "HH:MM" hora local del restaurante
+  time          String // "HH:MM" restaurant local time
   partySize     Int
   customerName  String
   customerPhone String?
@@ -177,7 +177,7 @@ model Reservation {
   table         Table?            @relation(fields: [tableId], references: [id], onDelete: SetNull)
   status        ReservationStatus @default(CONFIRMED)
   source        ReservationSource
-  // Token del enlace público de cancelación del email de confirmación
+  // Token for the public cancellation link in the confirmation email
   cancelToken   String            @unique
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -186,12 +186,12 @@ model Reservation {
   @@map("reservations")
 }
 
-// ─────────────────────────── Identidad ───────────────────────────
+// ─────────────────────────── Identity ────────────────────────────
 
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
-  // Nullable para poder añadir SSO (Google, etc.) sin migración
+  // Nullable so SSO (Google, etc.) can be added without a migration
   passwordHash String?
   name         String
   emailVerifiedAt DateTime?
@@ -215,7 +215,7 @@ model VerificationToken {
   userId    String
   user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      VerificationTokenType
-  // Se guarda el hash SHA-256 del token, nunca el token en claro
+  // Stores the SHA-256 hash of the token, never the token in clear text
   tokenHash String                @unique
   expiresAt DateTime
   usedAt    DateTime?
@@ -225,7 +225,7 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// ─────────────────────── Organizaciones ──────────────────────────
+// ─────────────────────── Organizations ───────────────────────────
 
 enum OrgRole {
   OWNER
@@ -234,11 +234,11 @@ enum OrgRole {
   STAFF
 }
 
-// La "cadena" o negocio; agrupa restaurantes y cuentas de empleados.
+// The "chain" or business; groups restaurants and staff accounts.
 model Organization {
   id        String   @id @default(cuid())
   name      String
-  // Stripe Connect (Fase 8)
+  // Stripe Connect (Phase 8)
   stripeAccountId      String?  @unique
   stripeChargesEnabled Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -286,7 +286,7 @@ model Restaurant {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
-  // Slug único global: identifica la página pública (/r/[slug])
+  // Globally unique slug: identifies the public page (/r/[slug])
   slug           String       @unique
   description    String?
   address        String?
@@ -294,9 +294,9 @@ model Restaurant {
   phone          String?
   timezone       String       @default("Europe/Madrid")
   currency       String       @default("EUR")
-  // Visibilidad de la página pública (Fase 6)
+  // Public page visibility (Phase 6)
   isPublic       Boolean      @default(false)
-  // Horarios de apertura por día de semana (estructura JSON, Fase 5/6)
+  // Opening hours by day of week (JSON structure, Phase 5/6)
   openingHours   Json?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -311,11 +311,11 @@ model Restaurant {
   @@map("restaurants")
 }
 
-// ─────────────────────── Cartas y menús ──────────────────────────
+// ─────────────────────── Menus ───────────────────────────────────
 
 enum MenuType {
-  A_LA_CARTE // carta normal: cada plato con su precio
-  FIXED_PRICE // menú del día / degustación: precio cerrado
+  A_LA_CARTE // regular menu: each dish has its own price
+  FIXED_PRICE // daily/tasting menu: fixed price
 }
 
 enum MenuStatus {
@@ -324,7 +324,7 @@ enum MenuStatus {
   ARCHIVED
 }
 
-// Los 14 alérgenos de declaración obligatoria en la UE
+// The 14 allergens whose declaration is mandatory in the EU
 enum Allergen {
   GLUTEN
   CRUSTACEANS
@@ -350,7 +350,7 @@ model Menu {
   description  String?
   type         MenuType   @default(A_LA_CARTE)
   status       MenuStatus @default(DRAFT)
-  // Solo para FIXED_PRICE: precio del menú completo, en céntimos
+  // FIXED_PRICE only: price of the whole menu, in cents
   priceCents   Int?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -362,17 +362,17 @@ model Menu {
   @@map("menus")
 }
 
-// Vigencia temporal de un menú. Un menú sin vigencias está siempre activo.
-// Ejemplos: "Carta de verano" (dateFrom/dateTo), "Menú del día" (daysOfWeek 1-5 + franja horaria).
+// Time-based validity of a menu. A menu with no schedules is always active.
+// Examples: "Summer menu" (dateFrom/dateTo), "Daily menu" (daysOfWeek 1-5 + time slot).
 model MenuSchedule {
   id         String    @id @default(cuid())
   menuId     String
   menu       Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
   dateFrom   DateTime? @db.Date
   dateTo     DateTime? @db.Date
-  // Días ISO: 1=lunes … 7=domingo. Vacío = todos los días.
+  // ISO days: 1=Monday … 7=Sunday. Empty = every day.
   daysOfWeek Int[]     @default([])
-  // Franja horaria local del restaurante, formato "HH:MM". Null = todo el día.
+  // Restaurant local time slot, "HH:MM" format. Null = all day.
   timeFrom   String?
   timeTo     String?
 
@@ -387,7 +387,7 @@ model MenuCategory {
   name        String
   description String?
   sortOrder   Int     @default(0)
-  // En menús de precio cerrado: cuántos platos elige el comensal en esta sección
+  // Fixed-price menus: how many dishes the diner picks in this section
   choiceCount Int?
 
   items MenuItem[]
@@ -402,11 +402,11 @@ model MenuItem {
   category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  // En carta: precio del plato. En menú cerrado suele ser 0 (va incluido).
+  // À la carte: dish price. In a fixed-price menu it's usually 0 (included).
   priceCents  Int        @default(0)
   photoUrl    String?
   allergens   Allergen[] @default([])
-  // Etiquetas libres: "vegano", "picante", "sin gluten"…
+  // Free-form tags: "vegan", "spicy", "gluten-free"…
   tags        String[]   @default([])
   isAvailable Boolean    @default(true)
   sortOrder   Int        @default(0)
@@ -419,7 +419,7 @@ model MenuItem {
   @@map("menu_items")
 }
 
-// Opciones de un plato ("Punto de la carne", "Extras"…)
+// Options for a dish ("Steak doneness", "Extras"…)
 model ItemModifierGroup {
   id        String   @id @default(cuid())
   itemId    String
@@ -447,7 +447,7 @@ model ItemModifier {
   @@map("item_modifiers")
 }
 
-// ─────────────────────── Sala: zonas y mesas ─────────────────────
+// ─────────────────────── Floor: zones and tables ─────────────────
 
 model Zone {
   id           String     @id @default(cuid())
@@ -469,7 +469,7 @@ model Table {
   zone      Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   name      String
   capacity  Int      @default(2)
-  // Código corto inmutable impreso en el QR físico de la mesa (PAY_URL/t/{qrCode})
+  // Immutable short code printed on the table's physical QR (PAY_URL/t/{qrCode})
   qrCode    String   @unique
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
@@ -481,7 +481,7 @@ model Table {
   @@map("tables")
 }
 
-// Sesiones de refresh token (rotación + revocación en logout)
+// Refresh-token sessions (rotation + revocation on logout)
 model Session {
   id               String    @id @default(cuid())
   userId           String

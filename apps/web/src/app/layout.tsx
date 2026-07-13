@@ -13,7 +13,7 @@ const fraunces = Fraunces({
   axes: ["SOFT", "WONK", "opsz"],
 });
 
-// Nota: el backoffice sirve en el puerto 3100 (el 3000 suele estar ocupado por WSL en esta máquina)
+// Note: the back office serves on port 3100 (3000 is often taken by WSL on this machine)
 export const metadata: Metadata = {
   title: "Restaurant Manager — gestión y cobro por QR para hostelería",
   description:

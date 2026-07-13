@@ -23,7 +23,7 @@ export default function TableResolvePage({ params }: { params: Promise<{ qrCode:
           router.replace(`/c/${view.checkToken}`);
         } else {
           setState("no-check");
-          // Reintenta cada 5s: el camarero puede abrir la cuenta en cualquier momento
+          // Retry every 5s: the waiter can open the bill at any moment
           setTimeout(poll, 5000);
         }
       } catch (err) {

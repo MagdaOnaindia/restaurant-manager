@@ -20,7 +20,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
       const body = await res.json();
       message = body.message ?? message;
     } catch {
-      /* sin JSON */
+      /* no JSON */
     }
     throw new ApiError(res.status, message);
   }
@@ -31,7 +31,7 @@ export const apiGet = <T>(path: string) => req<T>(path);
 export const apiPost = <T>(path: string, body?: unknown) =>
   req<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
 
-/** Identificador anónimo y estable de este comensal en este dispositivo. */
+/** Stable anonymous identifier for this diner on this device. */
 export function getSessionId(): string {
   const KEY = "rms.pay.session";
   let id = localStorage.getItem(KEY);

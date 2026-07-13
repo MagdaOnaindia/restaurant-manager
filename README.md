@@ -1,113 +1,117 @@
 # Restaurant Manager
 
-Plataforma de gestión para hostelería (restaurantes y cadenas) con **cobro dividido por QR en mesa**: cada comensal escanea el QR, ve la cuenta, elige qué paga (todo, a partes iguales, sus platos o un importe libre) y paga desde su móvil. El personal ve los pagos en tiempo real.
+A management platform for hospitality (restaurants and chains) with **split-the-bill by QR at the table**: each diner scans the QR, sees the bill, chooses what to pay (everything, an equal share, their own dishes or a custom amount) and pays from their phone. Staff see the payments in real time.
 
-## Aplicaciones
+> The product targets the Spanish hospitality market, so the user-facing UI and emails are in Spanish (Bizum, EU allergen labelling, etc.). Code, comments and docs are in English.
 
-| App | Qué es | URL en desarrollo |
+## Apps
+
+| App | What it is | Dev URL |
 | --- | --- | --- |
-| `apps/api` | API REST (NestJS + Prisma + PostgreSQL) | http://localhost:4000 |
-| `apps/web` | Backoffice de gestión + página pública de cada restaurante | http://localhost:3100 |
-| `apps/pay` | App del comensal: QR → cuenta → dividir → pagar | http://localhost:3001 |
-| `packages/shared` | Tipos, esquemas Zod y constantes compartidas | — |
+| `apps/api` | REST API (NestJS + Prisma + PostgreSQL) | http://localhost:4000 |
+| `apps/web` | Management back office + each restaurant's public page | http://localhost:3100 |
+| `apps/pay` | Diner app: QR → bill → split → pay | http://localhost:3001 |
+| `packages/shared` | Shared types, Zod schemas and constants | — |
 
-## Puesta en marcha
+## Getting started
 
-Requisitos: Node.js ≥ 20, pnpm ≥ 9, Docker Desktop.
+Requirements: Node.js ≥ 20, pnpm ≥ 9, Docker Desktop.
 
 ```bash
 pnpm install
 docker compose up -d            # PostgreSQL (localhost:5433) + Mailpit (UI: http://localhost:8025)
-cp .env.example apps/api/.env   # ajustar si hace falta
-pnpm db:migrate                 # migraciones Prisma
+cp .env.example apps/api/.env   # adjust if needed
+pnpm db:migrate                 # Prisma migrations
 pnpm dev                        # api (4000) + web (3100) + pay (3001)
 ```
 
-Primeros pasos: regístrate en http://localhost:3100/register (el email de verificación llega a Mailpit: http://localhost:8025), crea tu organización y tu primer restaurante, añade zonas y mesas, crea una carta y publícala.
+First steps: sign up at http://localhost:3100/register (the verification email lands in Mailpit: http://localhost:8025), create your organization and your first restaurant, add zones and tables, create a menu and publish it.
 
-### Cuenta demo
+### Demo account
 
-Para explorar el producto con datos realistas sin crear nada a mano:
+To explore the product with realistic data without creating anything by hand:
 
 ```bash
 node scripts/seed-demo.mjs
 ```
 
-Crea el restaurante **La Parrilla de Ana** (carta, menú del día, mesas, reservas de hoy y una
-cuenta a medio pagar por QR) y deja las credenciales listas:
+It creates the restaurant **La Parrilla de Ana** (menu, daily menu, tables, today's reservations and a
+half-paid bill via QR) and prints ready-to-use credentials:
 
-- Backoffice: http://localhost:3100/login — `demo@rms.local` / `demo1234`
-- Página pública: http://localhost:3100/r/la-parrilla-de-ana
+- Back office: http://localhost:3100/login — `demo@rms.local` / `demo1234`
+- Public page: http://localhost:3100/r/la-parrilla-de-ana
 
-## Capturas
+## Screenshots
 
-| Portada | Panel del día |
+| Landing | Daily dashboard |
 | --- | --- |
 | ![Landing](docs/screenshots/01-landing.png) | ![Dashboard](docs/screenshots/02-dashboard.png) |
 
-| Comandero (plano de sala) | Cuenta de una mesa |
+| Waiter floor view | A table's bill |
 | --- | --- |
-| ![Comandero](docs/screenshots/03-comandero.png) | ![Cuenta](docs/screenshots/04-cuenta-mesa.png) |
+| ![Floor view](docs/screenshots/03-comandero.png) | ![Bill](docs/screenshots/04-cuenta-mesa.png) |
 
-| Editor de carta | Reservas del día |
+| Menu editor | Today's reservations |
 | --- | --- |
-| ![Cartas](docs/screenshots/05-editor-carta.png) | ![Reservas](docs/screenshots/06-reservas.png) |
+| ![Menus](docs/screenshots/05-editor-carta.png) | ![Reservations](docs/screenshots/06-reservas.png) |
 
-| Página pública del restaurante | El comensal divide y paga (móvil) |
+| Restaurant public page | Diner splits and pays (mobile) |
 | --- | --- |
-| ![Página pública](docs/screenshots/07-pagina-publica.png) | ![Comensal](docs/screenshots/08-comensal-cuenta.png) |
+| ![Public page](docs/screenshots/07-pagina-publica.png) | ![Diner](docs/screenshots/08-comensal-cuenta.png) |
 
-Las capturas se regeneran con `node scripts/screenshots.mjs` (requiere la cuenta demo).
+Regenerate the screenshots with `node scripts/screenshots.mjs` (requires the demo account).
 
-## Funcionalidades
+## Features
 
-**Plataforma de gestión**
-- Cuentas con verificación por email y reseteo de contraseña (JWT + refresh rotativo en cookies httpOnly).
-- Organizaciones/cadenas con roles `OWNER` / `ADMIN` / `MANAGER` / `STAFF` e invitaciones por email.
-- Varios restaurantes por organización, con selector en el backoffice.
-- Zonas y mesas con **QR imprimible** por mesa (hoja de tarjetas recortables).
-- Cartas y menús: tipo carta o precio cerrado (menú del día), categorías, platos con precio, foto, **alérgenos UE-14**, etiquetas y disponibilidad; **vigencias temporales** (temporadas, días, franjas) resueltas en la zona horaria del restaurante; duplicado completo de menús.
-- Reservas: turnos con aforo por franja de entrada, motor de disponibilidad, reservas del personal y públicas, confirmación y cancelación por email.
-- Página pública `/r/[slug]` con la carta vigente y widget de reservas.
+**Management platform**
+- Accounts with email verification and password reset (JWT + rotating refresh in httpOnly cookies).
+- Organizations/chains with `OWNER` / `ADMIN` / `MANAGER` / `STAFF` roles and email invitations.
+- Multiple restaurants per organization, with a selector in the back office.
+- Zones and tables with a **printable QR** per table (sheet of cut-out cards).
+- Menus: à la carte or fixed-price (daily menu), categories, priced items, photo, **EU-14 allergens**, tags and availability; **time-based validity** (seasons, days, time slots) resolved in the restaurant's timezone; full menu duplication.
+- Reservations: shifts with per-slot pacing capacity, availability engine, staff and public bookings, email confirmation and cancellation.
+- Public page `/r/[slug]` with the live menu and a reservation widget.
 
-**Cobro dividido (SplitPay)**
-- Comandero táctil: plano de mesas, cuenta por mesa con snapshot de precios, líneas libres.
-- El comensal escanea el QR → ve la cuenta en vivo (SSE) → paga **todo / a partes iguales / sus platos / importe libre** + propina, sin instalar nada y sin registro.
-- Reparto por ítems con reservas temporales (dos personas no pueden pagar el mismo plato).
-- Protección contra dobles pagos simultáneos y validación de importes 100% en el servidor.
-- Stripe Connect (Express): el dinero va directo a la cuenta del restaurante; tarjeta, Apple/Google Pay y Bizum vía Payment Element.
-- Cobro mixto (QR + efectivo), recibos por email, historial con propinas y export CSV.
-- **Modo demo**: sin claves de Stripe, el flujo completo funciona con un botón de confirmación simulada.
+**Split payments (SplitPay)**
+- Touch-friendly waiter view: floor plan, per-table bill with price snapshots, free-form lines.
+- The diner scans the QR → sees the live bill (SSE) → pays **everything / an equal share / their dishes / a custom amount** + tip, no install and no sign-up.
+- Item-level split with temporary claims (two people can't pay the same dish).
+- Protection against simultaneous double payments and 100% server-side amount validation.
+- Stripe Connect (Express): money goes straight to the restaurant's account; card, Apple/Google Pay and Bizum via Payment Element.
+- Mixed payment (QR + cash), email receipts, history with tips and CSV export.
+- **Demo mode**: with no Stripe keys, the full flow works via a simulated confirm button.
 
-## Activar pagos reales (modo test de Stripe)
+## Enabling real payments (Stripe test mode)
 
-1. Crea una cuenta en [stripe.com](https://stripe.com) y copia las claves de **modo test**.
-2. En `apps/api/.env`: `STRIPE_SECRET_KEY=sk_test_…` y `STRIPE_PUBLISHABLE_KEY=pk_test_…`.
-3. Webhooks en local: instala [Stripe CLI](https://docs.stripe.com/stripe-cli) y ejecuta
-   `stripe listen --forward-to localhost:4000/webhooks/stripe`; copia el `whsec_…` a `STRIPE_WEBHOOK_SECRET`.
-4. Reinicia la API. En el backoffice → **Cobros** → “Configurar cobros con Stripe” (onboarding Express de prueba).
-5. Paga con la tarjeta de test `4242 4242 4242 4242`. Bizum se puede activar en el Dashboard de Stripe (Payment methods).
+1. Create an account at [stripe.com](https://stripe.com) and copy the **test mode** keys.
+2. In `apps/api/.env`: `STRIPE_SECRET_KEY=sk_test_…` and `STRIPE_PUBLISHABLE_KEY=pk_test_…`.
+3. Local webhooks: install the [Stripe CLI](https://docs.stripe.com/stripe-cli) and run
+   `stripe listen --forward-to localhost:4000/webhooks/stripe`; copy the `whsec_…` into `STRIPE_WEBHOOK_SECRET`.
+4. Restart the API. In the back office → **Cobros** → "Configurar cobros con Stripe" (Express test onboarding).
+5. Pay with the test card `4242 4242 4242 4242`. Bizum can be enabled from the Stripe Dashboard (Payment methods).
 
-## Comandos
+> If your Stripe account doesn't have Connect enabled yet, set `STRIPE_DIRECT_CHARGES=true` (dev only) to charge the platform account directly while you test.
+
+## Commands
 
 ```bash
-pnpm dev          # los tres servidores en watch
-pnpm build        # build de producción (turbo)
-pnpm typecheck    # TypeScript en todos los paquetes
-pnpm --filter @rms/api test:e2e   # 61 tests e2e (requiere docker compose up)
+pnpm dev          # all three servers in watch mode
+pnpm build        # production build (turbo)
+pnpm typecheck    # TypeScript across every package
+pnpm --filter @rms/api test:e2e   # 61 e2e tests (requires docker compose up)
 pnpm db:studio    # Prisma Studio
 ```
 
-## Arquitectura
+## Architecture
 
-- **Una API modular** (NestJS): `auth`, `orgs`, `tables`, `menus`, `reservations`, `checks`, `payments` (Stripe), `split-pay` (comensal). Tenancy por organización con guards de rol.
-- **Dinero siempre en céntimos** (enteros). Los pagos confirmados por **webhook de Stripe** son la única fuente de verdad del "pagado".
-- **Tiempo real** por SSE (bus en memoria; para múltiples réplicas se sustituiría por Redis pub/sub).
-- Emails con Nodemailer (Mailpit en desarrollo; apuntar `SMTP_*` a Resend/SES/etc. en producción).
+- **One modular API** (NestJS): `auth`, `orgs`, `tables`, `menus`, `reservations`, `checks`, `payments` (Stripe), `split-pay` (diner). Per-organization tenancy with role guards.
+- **Money always in cents** (integers). Payments confirmed by the **Stripe webhook** are the single source of truth for "paid".
+- **Real time** over SSE (in-memory bus; swap for Redis pub/sub across multiple replicas).
+- Emails via Nodemailer (Mailpit in dev; point `SMTP_*` at Resend/SES/etc. in production).
 
-## Despliegue (orientativo)
+## Deployment (indicative)
 
-- `web` y `pay` → Vercel (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_PAY_URL`).
-- `api` + PostgreSQL → Railway/Fly/Render (ejecutar `prisma migrate deploy` en el release).
-- Configurar `WEB_URL`, `PAY_URL`, `API_PUBLIC_URL`, secretos JWT nuevos, SMTP real y claves de Stripe (con el webhook apuntando a `https://api…/webhooks/stripe`).
-- Subida de fotos: en producción cambiar el almacenamiento local por S3/R2 (punto único: `apps/api/src/uploads`).
+- `web` and `pay` → Vercel (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_PAY_URL`).
+- `api` + PostgreSQL → Railway/Fly/Render (run `prisma migrate deploy` on release).
+- Set `WEB_URL`, `PAY_URL`, `API_PUBLIC_URL`, fresh JWT secrets, real SMTP and Stripe keys (with the webhook pointing at `https://api…/webhooks/stripe`).
+- Photo uploads: in production swap local storage for S3/R2 (single touch point: `apps/api/src/uploads`).

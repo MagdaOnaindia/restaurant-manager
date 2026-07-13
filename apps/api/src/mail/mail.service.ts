@@ -25,7 +25,7 @@ export class MailService {
     try {
       await this.transporter.sendMail({ from: this.from, to, subject, html });
     } catch (err) {
-      // Un fallo de SMTP no debe romper el flujo de la API; se registra y se sigue.
+      // An SMTP failure must not break the API flow; log it and carry on.
       this.logger.error(`No se pudo enviar el email "${subject}" a ${to}`, err as Error);
     }
   }

@@ -28,7 +28,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-/** Firma un payload como lo haría Stripe (helper oficial del SDK). */
+/** Signs a payload the way Stripe would (official SDK helper). */
 function signedPayload(payload: object): { body: string; signature: string } {
   const body = JSON.stringify(payload);
   const signature = Stripe.webhooks.generateTestHeaderString({
@@ -38,7 +38,7 @@ function signedPayload(payload: object): { body: string; signature: string } {
   return { body, signature };
 }
 
-describe("Stripe Connect y webhooks (e2e)", () => {
+describe("Stripe Connect and webhooks (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let http: ReturnType<INestApplication["getHttpServer"]>;
@@ -90,7 +90,7 @@ describe("Stripe Connect y webhooks (e2e)", () => {
     await app.close();
   });
 
-  it("el estado inicial refleja cuenta conectada sin cobros activos", async () => {
+  it("the initial status reflects a connected account with payments not yet active", async () => {
     const res = await request(http)
       .get(`/orgs/${orgId}/stripe/status`)
       .set("Cookie", cookies)
@@ -99,7 +99,7 @@ describe("Stripe Connect y webhooks (e2e)", () => {
     expect(res.body.chargesEnabled).toBe(false);
   });
 
-  it("rechaza webhooks sin firma o con firma inválida", async () => {
+  it("rejects webhooks with no signature or an invalid signature", async () => {
     await request(http).post("/webhooks/stripe").send({ type: "account.updated" }).expect(400);
 
     const { body } = signedPayload({ type: "account.updated", data: { object: {} } });
@@ -111,7 +111,7 @@ describe("Stripe Connect y webhooks (e2e)", () => {
       .expect(400);
   });
 
-  it("account.updated firmado activa chargesEnabled", async () => {
+  it("a signed account.updated enables chargesEnabled", async () => {
     const { body, signature } = signedPayload({
       id: "evt_test_1",
       object: "event",
@@ -132,13 +132,13 @@ describe("Stripe Connect y webhooks (e2e)", () => {
     expect(res.body.chargesEnabled).toBe(true);
   });
 
-  it("solo OWNER puede pedir el enlace de onboarding", async () => {
-    // La creadora es OWNER: el guard pasa; con la clave dummy Stripe fallará
-    // al llamar a la API real, pero nunca con 403.
+  it("only OWNER can request the onboarding link", async () => {
+    // The creator is OWNER: the guard passes; with the dummy key Stripe will fail
+    // when calling the real API, but never with 403.
     const res = await request(http)
       .post(`/orgs/${orgId}/stripe/onboarding-link`)
       .set("Cookie", cookies);
-    // Con la clave dummy la llamada real a Stripe falla, pero nunca por permisos
+    // With the dummy key the real Stripe call fails, but never due to permissions
     expect(res.status).not.toBe(403);
     expect(res.status).not.toBe(401);
   });

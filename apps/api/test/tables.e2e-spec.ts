@@ -27,7 +27,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Zonas y mesas (e2e)", () => {
+describe("Zones and tables (e2e)", () => {
   let app: INestApplication;
   let mail: MailStub;
   let prisma: PrismaService;
@@ -75,7 +75,7 @@ describe("Zonas y mesas (e2e)", () => {
       .expect(201);
     restaurantId = rest.body.restaurant.id;
 
-    // STAFF por invitación
+    // STAFF via invitation
     await request(http)
       .post(`/orgs/${orgId}/invitations`)
       .set("Cookie", ownerCookies)
@@ -94,7 +94,7 @@ describe("Zonas y mesas (e2e)", () => {
     await app.close();
   });
 
-  it("crea zonas y mesas con qrCode único", async () => {
+  it("creates zones and tables with a unique qrCode", async () => {
     const zone = await request(http)
       .post(`/restaurants/${restaurantId}/zones`)
       .set("Cookie", ownerCookies)
@@ -117,7 +117,7 @@ describe("Zonas y mesas (e2e)", () => {
     expect(t1.body.table.qrCode).not.toBe(t2.body.table.qrCode);
   });
 
-  it("lista zonas con sus mesas ordenadas", async () => {
+  it("lists zones with their tables in order", async () => {
     const res = await request(http)
       .get(`/restaurants/${restaurantId}/zones`)
       .set("Cookie", ownerCookies)
@@ -129,7 +129,7 @@ describe("Zonas y mesas (e2e)", () => {
     ]);
   });
 
-  it("STAFF puede ver zonas pero no crear ni borrar", async () => {
+  it("STAFF can view zones but not create or delete", async () => {
     await request(http)
       .get(`/restaurants/${restaurantId}/zones`)
       .set("Cookie", staffCookies)
@@ -145,7 +145,7 @@ describe("Zonas y mesas (e2e)", () => {
       .expect(403);
   });
 
-  it("no permite operar sobre zonas de otro restaurante", async () => {
+  it("doesn't allow operating on another restaurant's zones", async () => {
     const other = await request(http)
       .post(`/orgs/${orgId}/restaurants`)
       .set("Cookie", ownerCookies)

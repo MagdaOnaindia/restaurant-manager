@@ -5,18 +5,18 @@ import { join } from "path";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  // rawBody: necesario para verificar la firma de los webhooks de Stripe
+  // rawBody: required to verify Stripe webhook signatures
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
 
   app.use(cookieParser());
-  // Fotos de platos subidas en desarrollo (S3-compatible en producción)
+  // Dish photos uploaded in development (S3-compatible in production)
   app.useStaticAssets(join(process.cwd(), "uploads"), { prefix: "/uploads" });
   app.enableCors({
     origin: [process.env.WEB_URL ?? "http://localhost:3000", process.env.PAY_URL ?? "http://localhost:3001"],
     credentials: true,
   });
-  // La validación de entrada se hace con esquemas Zod compartidos (packages/shared)
-  // mediante pipes por endpoint, no con class-validator.
+  // Input validation uses shared Zod schemas (packages/shared) via per-endpoint
+  // pipes, not class-validator.
   app.enableShutdownHooks();
 
   const port = Number(process.env.API_PORT ?? 4000);

@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: rms
       POSTGRES_DB: rms_dev
     ports:
-      # 5433 en el host: evita chocar con otros Postgres locales (p. ej. dentro de WSL)
+      # 5433 on the host: avoids clashing with other local Postgres instances (e.g. inside WSL)
       - "5433:5432"
     volumes:
       - rms-pgdata:/var/lib/postgresql/data
@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     ports:
       - "1025:1025" # SMTP
-      - "8025:8025" # UI web: http://localhost:8025
+      - "8025:8025" # web UI: http://localhost:8025
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1

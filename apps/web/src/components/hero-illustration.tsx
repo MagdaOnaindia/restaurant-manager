@@ -1,6 +1,6 @@
 /**
- * Ilustración de la portada: una mesa vista desde arriba con la cuenta
- * dividiéndose entre dos móviles vía QR. Estilo flat cálido de la marca.
+ * Landing illustration: a table seen from above with the bill splitting
+ * between two phones via QR. The brand's warm flat style.
  */
 export function HeroIllustration({ className }: { className?: string }) {
   return (

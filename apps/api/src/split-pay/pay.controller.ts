@@ -24,7 +24,7 @@ import { CheckEventsService } from "../checks/check-events.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotFoundException } from "@nestjs/common";
 
-/** API pública del comensal (sin autenticación; acceso por tokens opacos). */
+/** Public diner API (no authentication; access via opaque tokens). */
 @Controller("pay")
 export class PayController {
   constructor(
@@ -33,7 +33,7 @@ export class PayController {
     private readonly prisma: PrismaService,
   ) {}
 
-  /** Resuelve el QR físico de la mesa a la cuenta abierta. */
+  /** Resolves the table's physical QR to the open bill. */
   @Get("t/:qrCode")
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   async resolveTable(@Param("qrCode") qrCode: string) {
@@ -46,7 +46,7 @@ export class PayController {
     return this.splitPay.view(token, sessionId);
   }
 
-  /** Estado de la cuenta en tiempo real (SSE). */
+  /** Real-time bill status (SSE). */
   @Sse("checks/:token/events")
   async stream(@Param("token") token: string): Promise<Observable<{ data: string; type: string }>> {
     const check = await this.prisma.check.findUnique({ where: { publicToken: token } });
@@ -83,7 +83,7 @@ export class PayController {
     return this.splitPay.createIntent(token, body);
   }
 
-  /** Confirmación simulada para desarrollo sin claves de Stripe. */
+  /** Simulated confirmation for development without Stripe keys. */
   @Post("checks/:token/intents/:paymentId/dev-confirm")
   @HttpCode(200)
   async devConfirm(@Param("token") token: string, @Param("paymentId") paymentId: string) {

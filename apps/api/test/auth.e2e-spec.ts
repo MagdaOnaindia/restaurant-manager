@@ -6,7 +6,7 @@ import { AppModule } from "../src/app.module";
 import { MailService } from "../src/mail/mail.service";
 import { PrismaService } from "../src/prisma/prisma.service";
 
-/** Stub de MailService que captura los tokens enviados por email. */
+/** MailService stub that captures the tokens sent by email. */
 class MailStub {
   verificationTokens = new Map<string, string>();
   resetTokens = new Map<string, string>();
@@ -59,7 +59,7 @@ describe("Auth (e2e)", () => {
     await app.close();
   });
 
-  it("registra un usuario y envía email de verificación", async () => {
+  it("registers a user and sends a verification email", async () => {
     const res = await request(app.getHttpServer())
       .post("/auth/register")
       .send({ name: "Ana", email: EMAIL, password: PASSWORD })
@@ -69,14 +69,14 @@ describe("Auth (e2e)", () => {
     expect(mail.verificationTokens.get(EMAIL)).toBeTruthy();
   });
 
-  it("rechaza el registro duplicado", async () => {
+  it("rejects duplicate registration", async () => {
     await request(app.getHttpServer())
       .post("/auth/register")
       .send({ name: "Ana", email: EMAIL, password: PASSWORD })
       .expect(409);
   });
 
-  it("no deja iniciar sesión sin verificar el email", async () => {
+  it("blocks login until the email is verified", async () => {
     const res = await request(app.getHttpServer())
       .post("/auth/login")
       .send({ email: EMAIL, password: PASSWORD })
@@ -84,13 +84,13 @@ describe("Auth (e2e)", () => {
     expect(res.body.code).toBe("EMAIL_NOT_VERIFIED");
   });
 
-  it("verifica el email con el token y rechaza reutilizarlo", async () => {
+  it("verifies the email with the token and rejects reusing it", async () => {
     const token = mail.verificationTokens.get(EMAIL)!;
     await request(app.getHttpServer()).post("/auth/verify-email").send({ token }).expect(200);
     await request(app.getHttpServer()).post("/auth/verify-email").send({ token }).expect(400);
   });
 
-  it("rechaza credenciales incorrectas", async () => {
+  it("rejects incorrect credentials", async () => {
     await request(app.getHttpServer())
       .post("/auth/login")
       .send({ email: EMAIL, password: "incorrecta99" })
@@ -99,7 +99,7 @@ describe("Auth (e2e)", () => {
 
   let refreshToken: string;
 
-  it("inicia sesión, devuelve cookies y accede a /auth/me", async () => {
+  it("logs in, returns cookies and accesses /auth/me", async () => {
     const res = await request(app.getHttpServer())
       .post("/auth/login")
       .send({ email: EMAIL, password: PASSWORD })
@@ -117,7 +117,7 @@ describe("Auth (e2e)", () => {
     expect(me.body.user.emailVerified).toBe(true);
   });
 
-  it("rota el refresh token y detecta la reutilización del antiguo", async () => {
+  it("rotates the refresh token and detects reuse of the old one", async () => {
     const res = await request(app.getHttpServer())
       .post("/auth/refresh")
       .set("Cookie", `refresh_token=${refreshToken}`)
@@ -126,20 +126,20 @@ describe("Auth (e2e)", () => {
     expect(jar["refresh_token"]).toBeTruthy();
     expect(jar["refresh_token"]).not.toBe(refreshToken);
 
-    // Reutilizar el token antiguo (ya rotado) debe fallar y revocar todo
+    // Reusing the old (already-rotated) token must fail and revoke everything
     await request(app.getHttpServer())
       .post("/auth/refresh")
       .set("Cookie", `refresh_token=${refreshToken}`)
       .expect(401);
 
-    // Y el nuevo también queda revocado por seguridad
+    // And the new one is revoked too, for safety
     await request(app.getHttpServer())
       .post("/auth/refresh")
       .set("Cookie", `refresh_token=${jar["refresh_token"]}`)
       .expect(401);
   });
 
-  it("restablece la contraseña por email y revoca las sesiones", async () => {
+  it("resets the password via email and revokes the sessions", async () => {
     await request(app.getHttpServer()).post("/auth/forgot-password").send({ email: EMAIL }).expect(200);
     const token = mail.resetTokens.get(EMAIL)!;
     expect(token).toBeTruthy();
@@ -159,14 +159,14 @@ describe("Auth (e2e)", () => {
       .expect(200);
   });
 
-  it("forgot-password responde ok aunque el email no exista (sin enumeración)", async () => {
+  it("forgot-password responds ok even if the email doesn't exist (no enumeration)", async () => {
     await request(app.getHttpServer())
       .post("/auth/forgot-password")
       .send({ email: "noexiste@test.local" })
       .expect(200);
   });
 
-  it("rechaza tokens de verificación caducados", async () => {
+  it("rejects expired verification tokens", async () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { email: EMAIL } });
     const { createHash } = await import("crypto");
     const raw = "token-caducado-e2e";

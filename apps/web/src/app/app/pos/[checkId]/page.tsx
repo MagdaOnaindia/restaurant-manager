@@ -47,7 +47,7 @@ export default function CheckEditorPage({ params }: { params: Promise<{ checkId:
     void load();
   }, [load]);
 
-  // Pagos en tiempo real: cualquier cambio (QR de comensales, efectivo…) refresca
+  // Real-time payments: any change (diner QR, cash…) refreshes
   const publicToken = check?.publicToken;
   useEffect(() => {
     if (!publicToken) return;

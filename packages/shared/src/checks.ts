@@ -17,7 +17,7 @@ export const openCheckSchema = z.object({
 });
 export type OpenCheckInput = z.infer<typeof openCheckSchema>;
 
-/** Línea desde la carta (menuItemId, precio snapshot del servidor) o línea libre (name+precio). */
+/** Line from the menu (menuItemId, server-side price snapshot) or a free-form line (name + price). */
 export const addLineSchema = z
   .object({
     menuItemId: z.string().optional(),
@@ -37,14 +37,14 @@ export const updateLineSchema = z.object({
 });
 export type UpdateLineInput = z.infer<typeof updateLineSchema>;
 
-/** Cobro manual (efectivo/datáfono propio) registrado por el personal. */
+/** Manual charge (cash / the venue's own card reader) recorded by staff. */
 export const cashPaymentSchema = z.object({
   amountCents: z.number().int().min(1).max(1_000_000),
   payerName: z.string().trim().max(60).optional(),
 });
 export type CashPaymentInput = z.infer<typeof cashPaymentSchema>;
 
-// ── Tipos de respuesta ──────────────────────────────────────────────
+// ── Response types ──────────────────────────────────────────────────
 
 export interface CheckLineInfo {
   id: string;
@@ -73,7 +73,7 @@ export interface CheckDetail {
   status: CheckStatus;
   notes: string | null;
   createdAt: string;
-  /** Token público de la cuenta: el comandero lo usa para el stream SSE. */
+  /** Public bill token: the waiter view uses it for the SSE stream. */
   publicToken: string;
   lines: CheckLineInfo[];
   payments: CheckPaymentInfo[];

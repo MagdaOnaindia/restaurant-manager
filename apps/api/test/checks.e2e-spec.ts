@@ -25,7 +25,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Cuentas y comandero (e2e)", () => {
+describe("Bills and waiter view (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let http: ReturnType<INestApplication["getHttpServer"]>;
@@ -84,7 +84,7 @@ describe("Cuentas y comandero (e2e)", () => {
       .expect(201);
     tableId = table.body.table.id;
 
-    // Carta publicada con un plato
+    // Published menu with one dish
     const menu = await request(http)
       .post(`/restaurants/${restaurantId}/menus`)
       .set("Cookie", cookies)
@@ -114,7 +114,7 @@ describe("Cuentas y comandero (e2e)", () => {
     await app.close();
   });
 
-  it("abre una cuenta en la mesa y rechaza abrir otra", async () => {
+  it("opens a bill on the table and refuses to open another", async () => {
     const res = await request(http)
       .post(`/restaurants/${restaurantId}/checks`)
       .set("Cookie", cookies)
@@ -131,7 +131,7 @@ describe("Cuentas y comandero (e2e)", () => {
       .expect(409);
   });
 
-  it("añade líneas desde la carta (snapshot) y acumula cantidades", async () => {
+  it("adds lines from the menu (snapshot) and accumulates quantities", async () => {
     await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/lines`)
       .set("Cookie", cookies)
@@ -147,7 +147,7 @@ describe("Cuentas y comandero (e2e)", () => {
     expect(res.body.check.totalCents).toBe(1050);
   });
 
-  it("el snapshot de precio sobrevive a cambios de carta", async () => {
+  it("the price snapshot survives menu changes", async () => {
     await request(http)
       .patch(`/restaurants/${restaurantId}/items/${gildaId}`)
       .set("Cookie", cookies)
@@ -161,7 +161,7 @@ describe("Cuentas y comandero (e2e)", () => {
     expect(res.body.check.totalCents).toBe(1050);
   });
 
-  it("admite líneas libres y aparece en el plano de sala", async () => {
+  it("accepts free-form lines and shows on the floor plan", async () => {
     const res = await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/lines`)
       .set("Cookie", cookies)
@@ -178,7 +178,7 @@ describe("Cuentas y comandero (e2e)", () => {
     expect(mesa.check.totalCents).toBe(1450);
   });
 
-  it("controla cantidades y borrado de líneas", async () => {
+  it("controls quantities and line deletion", async () => {
     const detail = await request(http)
       .get(`/restaurants/${restaurantId}/checks/${checkId}`)
       .set("Cookie", cookies)
@@ -198,7 +198,7 @@ describe("Cuentas y comandero (e2e)", () => {
       .expect(200);
   });
 
-  it("cierra la cuenta y la mesa queda libre", async () => {
+  it("closes the bill and the table becomes free", async () => {
     const res = await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/close`)
       .set("Cookie", cookies)
@@ -212,7 +212,7 @@ describe("Cuentas y comandero (e2e)", () => {
     const mesa = floor.body.zones[0].tables.find((t: { id: string }) => t.id === tableId);
     expect(mesa.check).toBeNull();
 
-    // Y no admite más líneas
+    // And it accepts no more lines
     await request(http)
       .post(`/restaurants/${restaurantId}/checks/${checkId}/lines`)
       .set("Cookie", cookies)
@@ -220,7 +220,7 @@ describe("Cuentas y comandero (e2e)", () => {
       .expect(400);
   });
 
-  it("cancelar exige rol MANAGER (la creadora es OWNER, puede)", async () => {
+  it("cancelling requires the MANAGER role (the creator is OWNER, so allowed)", async () => {
     const open = await request(http)
       .post(`/restaurants/${restaurantId}/checks`)
       .set("Cookie", cookies)

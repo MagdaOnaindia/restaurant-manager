@@ -55,7 +55,7 @@ export class OrgsController {
     return this.orgs.remove(orgId);
   }
 
-  // ── Miembros ─────────────────────────────────────────────────────
+  // ── Members ──────────────────────────────────────────────────────
 
   @Get(":orgId/members")
   @UseGuards(OrgRolesGuard)
@@ -83,7 +83,7 @@ export class OrgsController {
     return this.orgs.removeMember(orgId, membershipId);
   }
 
-  // ── Invitaciones (gestión desde la organización) ─────────────────
+  // ── Invitations (managed from the organization) ─────────────────
 
   @Post(":orgId/invitations")
   @UseGuards(OrgRolesGuard)
@@ -115,7 +115,7 @@ export class OrgsController {
     return this.orgs.revokeInvitation(orgId, invitationId);
   }
 
-  // ── Restaurantes de la organización ──────────────────────────────
+  // ── The organization's restaurants ───────────────────────────────
 
   @Post(":orgId/restaurants")
   @UseGuards(OrgRolesGuard)

@@ -15,7 +15,7 @@ import type { RequestUser } from "../auth/jwt-auth.guard";
 
 export const ORG_ROLE_KEY = "org_role_required";
 
-/** Rol mínimo necesario en la organización para acceder al endpoint. */
+/** Minimum role required in the organization to access the endpoint. */
 export const OrgRoles = (role: OrgRole) => SetMetadata(ORG_ROLE_KEY, role);
 
 export interface OrgScopedRequest extends Request {
@@ -24,9 +24,9 @@ export interface OrgScopedRequest extends Request {
 }
 
 /**
- * Comprueba que el usuario autenticado pertenece a la organización del recurso
- * (por :orgId o resolviendo :restaurantId) con el rol mínimo del decorador @OrgRoles.
- * Debe usarse detrás de JwtAuthGuard.
+ * Checks that the authenticated user belongs to the resource's organization
+ * (via :orgId or by resolving :restaurantId) with the minimum role from the @OrgRoles decorator.
+ * Must be used behind JwtAuthGuard.
  */
 @Injectable()
 export class OrgRolesGuard implements CanActivate {

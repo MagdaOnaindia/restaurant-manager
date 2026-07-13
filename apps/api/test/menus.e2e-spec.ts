@@ -23,7 +23,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Cartas y menús (e2e)", () => {
+describe("Menus (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let http: ReturnType<INestApplication["getHttpServer"]>;
@@ -80,7 +80,7 @@ describe("Cartas y menús (e2e)", () => {
     await app.close();
   });
 
-  it("crea una carta con categorías y platos con alérgenos", async () => {
+  it("creates a menu with categories and dishes with allergens", async () => {
     const menu = await request(http)
       .post(`/restaurants/${restaurantId}/menus`)
       .set("Cookie", cookies)
@@ -113,7 +113,7 @@ describe("Cartas y menús (e2e)", () => {
     expect(detail.body.menu.categories[0].items[0].name).toBe("Gazpacho andaluz");
   });
 
-  it("configura vigencias: carta de verano por fechas, menú del día L-V 13-16", async () => {
+  it("sets schedules: summer menu by dates, daily menu Mon-Fri 13-16", async () => {
     await request(http)
       .put(`/restaurants/${restaurantId}/menus/${cartaId}/schedules`)
       .set("Cookie", cookies)
@@ -136,8 +136,8 @@ describe("Cartas y menús (e2e)", () => {
       .expect(200);
   });
 
-  it("los borradores no aparecen en los menús vigentes", async () => {
-    // Miércoles 8 de julio de 2026, 14:00 en Madrid (12:00 UTC): ambas vigencias aplican
+  it("drafts don't appear in the active menus", async () => {
+    // Wednesday 8 July 2026, 14:00 in Madrid (12:00 UTC): both schedules apply
     const res = await request(http)
       .get(`/restaurants/${restaurantId}/menus/active?at=2026-07-08T12:00:00Z`)
       .set("Cookie", cookies)
@@ -145,7 +145,7 @@ describe("Cartas y menús (e2e)", () => {
     expect(res.body.menus).toHaveLength(0); // aún en borrador
   });
 
-  it("resuelve correctamente las vigencias tras publicar", async () => {
+  it("resolves the schedules correctly after publishing", async () => {
     await request(http)
       .patch(`/restaurants/${restaurantId}/menus/${cartaId}`)
       .set("Cookie", cookies)
@@ -165,17 +165,17 @@ describe("Cartas y menús (e2e)", () => {
       return res.body.menus.map((m: { name: string }) => m.name).sort();
     };
 
-    // Miércoles 14:00 Madrid en julio → carta + menú del día
+    // Wednesday 14:00 Madrid in July → menu + daily menu
     expect(await activeAt("2026-07-08T12:00:00Z")).toEqual(["Carta de verano", "Menú del día"]);
-    // Miércoles 17:30 Madrid → solo la carta (fuera de franja)
+    // Wednesday 17:30 Madrid → menu only (outside the time slot)
     expect(await activeAt("2026-07-08T15:30:00Z")).toEqual(["Carta de verano"]);
-    // Sábado 14:00 Madrid → solo la carta (el menú del día es L-V)
+    // Saturday 14:00 Madrid → menu only (the daily menu is Mon-Fri)
     expect(await activeAt("2026-07-11T12:00:00Z")).toEqual(["Carta de verano"]);
-    // Miércoles 14:00 Madrid en septiembre → solo el menú del día (carta caducada)
+    // Wednesday 14:00 Madrid in September → daily menu only (summer menu expired)
     expect(await activeAt("2026-09-16T12:00:00Z")).toEqual(["Menú del día"]);
   });
 
-  it("el endpoint público exige que la página esté publicada", async () => {
+  it("the public endpoint requires the page to be published", async () => {
     await request(http).get(`/public/restaurants/${slug}/menus`).expect(404);
 
     await request(http)
@@ -191,7 +191,7 @@ describe("Cartas y menús (e2e)", () => {
     expect(res.body.menus).toHaveLength(2);
   });
 
-  it("duplica un menú completo como borrador", async () => {
+  it("duplicates a whole menu as a draft", async () => {
     const dup = await request(http)
       .post(`/restaurants/${restaurantId}/menus/${cartaId}/duplicate`)
       .set("Cookie", cookies)
@@ -207,7 +207,7 @@ describe("Cartas y menús (e2e)", () => {
     expect(detail.body.menu.schedules).toHaveLength(1);
   });
 
-  it("valida los datos con Zod (precio negativo, hora inválida)", async () => {
+  it("validates the data with Zod (negative price, invalid time)", async () => {
     await request(http)
       .post(`/restaurants/${restaurantId}/menus`)
       .set("Cookie", cookies)

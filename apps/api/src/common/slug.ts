@@ -1,6 +1,6 @@
 const COMBINING_MARKS = /[̀-ͯ]/g;
 
-/** Convierte un nombre en un slug apto para URL ("Café Ñandú" → "cafe-nandu"). */
+/** Turns a name into a URL-friendly slug ("Café Ñandú" → "cafe-nandu"). */
 export function slugify(text: string): string {
   return text
     .normalize("NFD")
@@ -11,7 +11,7 @@ export function slugify(text: string): string {
     .slice(0, 60);
 }
 
-/** Sufijo corto aleatorio para desambiguar slugs o códigos. */
+/** Short random suffix to disambiguate slugs or codes. */
 export function shortCode(length = 6): string {
   const alphabet = "abcdefghjkmnpqrstuvwxyz23456789"; // sin caracteres ambiguos
   let out = "";

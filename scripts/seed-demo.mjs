@@ -1,9 +1,9 @@
 /**
- * Crea la cuenta demo "La Parrilla de Ana" con datos realistas:
- * carta, menú del día, mesas, turnos, reservas y una cuenta a medio pagar.
+ * Creates the demo account "La Parrilla de Ana" with realistic data:
+ * menu, daily menu, tables, shifts, reservations and a half-paid bill.
  *
- * Uso: node scripts/seed-demo.mjs  (con la API y Mailpit levantados)
- * Credenciales resultantes: demo@rms.local / demo1234
+ * Usage: node scripts/seed-demo.mjs  (with the API and Mailpit running)
+ * Resulting credentials: demo@rms.local / demo1234
  */
 
 const API = process.env.API_URL ?? "http://localhost:4000";
@@ -45,11 +45,11 @@ async function verificationTokenFor(email) {
       if (match) return match[1];
     }
   }
-  throw new Error("No llegó el email de verificación a Mailpit");
+  throw new Error("The verification email never reached Mailpit");
 }
 
 async function main() {
-  // 1. Cuenta (o reutilizar si ya existe)
+  // 1. Account (or reuse if it already exists)
   let fresh = false;
   const reg = await fetch(`${API}/auth/register`, {
     method: "POST",
@@ -60,9 +60,9 @@ async function main() {
     fresh = true;
     const token = await verificationTokenFor(EMAIL);
     await api("/auth/verify-email", { method: "POST", body: { token } });
-    console.log("✓ Cuenta creada y verificada");
+    console.log("✓ Account created and verified");
   } else {
-    console.log("• La cuenta demo ya existía, reutilizando");
+    console.log("• The demo account already existed, reusing it");
   }
   await api("/auth/login", { method: "POST", body: { email: EMAIL, password: PASSWORD } });
 
@@ -70,12 +70,12 @@ async function main() {
   let org = organizations.find((o) => o.name === "Grupo La Parrilla");
   if (org && !fresh) {
     const restaurant = org.restaurants[0];
-    console.log("• Datos demo ya presentes.");
+    console.log("• Demo data already present.");
     printSummary(restaurant?.slug);
     return;
   }
 
-  // 2. Organización y restaurante
+  // 2. Organization and restaurant
   org = (await api("/orgs", { method: "POST", body: { name: "Grupo La Parrilla" } })).organization;
   const restaurant = (
     await api(`/orgs/${org.id}/restaurants`, {
@@ -94,7 +94,7 @@ async function main() {
   await api(`/restaurants/${rid}`, { method: "PATCH", body: { isPublic: true } });
   console.log(`✓ Restaurante: ${restaurant.name} (/r/${restaurant.slug})`);
 
-  // 3. Sala: zonas y mesas
+  // 3. Floor: zones and tables
   const comedor = (await api(`/restaurants/${rid}/zones`, { method: "POST", body: { name: "Comedor" } })).zone;
   const terraza = (await api(`/restaurants/${rid}/zones`, { method: "POST", body: { name: "Terraza" } })).zone;
   const tables = [];
@@ -112,7 +112,7 @@ async function main() {
   }
   console.log(`✓ ${tables.length} mesas en 2 zonas`);
 
-  // 4. Carta de temporada
+  // 4. Seasonal menu
   const carta = (
     await api(`/restaurants/${rid}/menus`, {
       method: "POST",
@@ -156,9 +156,9 @@ async function main() {
     }
   }
   await api(`/restaurants/${rid}/menus/${carta.id}`, { method: "PATCH", body: { status: "PUBLISHED" } });
-  console.log("✓ Carta de temporada publicada (11 platos)");
+  console.log("✓ Seasonal menu published (11 dishes)");
 
-  // 5. Menú del día (L-V 13:00-16:00, 16,90 €)
+  // 5. Daily menu (Mon-Fri 13:00-16:00, 16,90 €)
   const menuDia = (
     await api(`/restaurants/${rid}/menus`, {
       method: "POST",
@@ -189,9 +189,9 @@ async function main() {
     body: { schedules: [{ daysOfWeek: [1, 2, 3, 4, 5], timeFrom: "13:00", timeTo: "16:00" }] },
   });
   await api(`/restaurants/${rid}/menus/${menuDia.id}`, { method: "PATCH", body: { status: "PUBLISHED" } });
-  console.log("✓ Menú del día publicado (16,90 €, L-V 13-16h)");
+  console.log("✓ Daily menu published (16,90 €, Mon-Fri 13-16h)");
 
-  // 6. Turnos de reserva
+  // 6. Reservation shifts
   for (const shift of [
     { name: "Comida", daysOfWeek: [], startTime: "13:00", endTime: "15:30", slotMinutes: 30, maxCoversPerSlot: 24 },
     { name: "Cena", daysOfWeek: [], startTime: "20:00", endTime: "22:30", slotMinutes: 30, maxCoversPerSlot: 20 },
@@ -199,7 +199,7 @@ async function main() {
     await api(`/restaurants/${rid}/shifts`, { method: "POST", body: shift });
   }
 
-  // 7. Reservas de hoy
+  // 7. Today's reservations
   const today = new Date().toLocaleDateString("en-CA");
   for (const r of [
     { time: "13:30", partySize: 4, customerName: "Familia García", customerPhone: "600 111 222", notes: "Trona para el peque" },
@@ -211,9 +211,9 @@ async function main() {
       body: { date: today, force: true, ...r },
     });
   }
-  console.log("✓ 3 reservas para hoy");
+  console.log("✓ 3 reservations for today");
 
-  // 8. Cuenta abierta en Mesa 2, pagada a medias por QR (modo demo)
+  // 8. Open bill on Table 2, half-paid via QR (demo mode)
   const mesa2 = tables.find((t) => t.name === "Mesa 2");
   const check = (await api(`/restaurants/${rid}/checks`, { method: "POST", body: { tableId: mesa2.id } })).check;
   for (const [name, qty] of [
@@ -239,7 +239,7 @@ async function main() {
     body: { sessionId: "sesion-demo-ana01", mode: "ITEMS", tipCents: 100, payerName: "Ana" },
   });
   await api(`/pay/checks/${check.publicToken}/intents/${intent.paymentId}/dev-confirm`, { method: "POST" });
-  console.log("✓ Cuenta abierta en Mesa 2 con un pago por QR ya hecho");
+  console.log("✓ Open bill on Table 2 with a QR payment already made");
 
   const { writeFileSync } = await import("fs");
   writeFileSync(
@@ -251,12 +251,12 @@ async function main() {
 
 function printSummary(slug, checkToken) {
   console.log("\n──────────────────────────────────────────");
-  console.log("  CUENTA DEMO LISTA");
-  console.log(`  Backoffice : http://localhost:3100/login`);
-  console.log(`  Email      : ${EMAIL}`);
-  console.log(`  Contraseña : ${PASSWORD}`);
-  if (slug) console.log(`  Página pública : http://localhost:3100/r/${slug}`);
-  if (checkToken) console.log(`  Cuenta del comensal : http://localhost:3001/c/${checkToken}`);
+  console.log("  DEMO ACCOUNT READY");
+  console.log(`  Back office : http://localhost:3100/login`);
+  console.log(`  Email       : ${EMAIL}`);
+  console.log(`  Password    : ${PASSWORD}`);
+  if (slug) console.log(`  Public page : http://localhost:3100/r/${slug}`);
+  if (checkToken) console.log(`  Diner bill  : http://localhost:3001/c/${checkToken}`);
   console.log("──────────────────────────────────────────");
 }
 

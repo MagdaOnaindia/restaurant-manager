@@ -16,10 +16,10 @@ import type { Check, CheckLine, Payment } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CheckEventsService } from "./check-events.service";
 
-/** Estados en los que la cuenta sigue "viva" en la mesa. */
+/** Statuses in which the bill is still "live" on the table. */
 export const LIVE_STATUSES = ["OPEN", "PARTIALLY_PAID", "PAID"] as const;
 
-/** El "pagado" sale de los pagos con éxito (Stripe o efectivo), nunca del cliente. */
+/** "Paid" comes from successful payments (Stripe or cash), never from the client. */
 export function computeTotals(lines: CheckLine[], payments: Payment[]) {
   const totalCents = lines.reduce((acc, l) => acc + l.unitPriceCents * l.quantity, 0);
   const paidCents = payments
@@ -78,7 +78,7 @@ export class ChecksService {
     return check;
   }
 
-  // ── Plano de sala ────────────────────────────────────────────────
+  // ── Floor plan ───────────────────────────────────────────────────
 
   async floor(restaurantId: string): Promise<FloorZone[]> {
     const zones = await this.prisma.zone.findMany({
@@ -122,7 +122,7 @@ export class ChecksService {
     }));
   }
 
-  // ── Ciclo de vida de la cuenta ───────────────────────────────────
+  // ── Bill lifecycle ───────────────────────────────────────────────
 
   async open(restaurantId: string, userId: string, input: OpenCheckInput): Promise<CheckDetail> {
     const table = await this.prisma.table.findFirst({
@@ -188,7 +188,7 @@ export class ChecksService {
     return this.toDetail(updated);
   }
 
-  // ── Cobro manual en efectivo ─────────────────────────────────────
+  // ── Manual cash charge ───────────────────────────────────────────
 
   async recordCashPayment(
     restaurantId: string,
@@ -223,7 +223,7 @@ export class ChecksService {
     return this.get(restaurantId, checkId);
   }
 
-  // ── Dashboard de inicio ──────────────────────────────────────────
+  // ── Home dashboard ───────────────────────────────────────────────
 
   async dashboard(restaurantId: string) {
     const restaurant = await this.prisma.restaurant.findUnique({ where: { id: restaurantId } });
@@ -243,7 +243,7 @@ export class ChecksService {
           status: { in: ["PENDING", "CONFIRMED", "SEATED"] },
         },
       }),
-      // Últimas 36h y se filtra por el día local del restaurante
+      // Last 36h, then filtered by the restaurant's local day
       this.prisma.payment.findMany({
         where: {
           status: "SUCCEEDED",
@@ -268,7 +268,7 @@ export class ChecksService {
     };
   }
 
-  // ── Historial ────────────────────────────────────────────────────
+  // ── History ──────────────────────────────────────────────────────
 
   async history(restaurantId: string, from?: string, to?: string) {
     const where: { restaurantId: string; createdAt?: { gte?: Date; lte?: Date } } = { restaurantId };
@@ -300,7 +300,7 @@ export class ChecksService {
     });
   }
 
-  // ── Líneas ───────────────────────────────────────────────────────
+  // ── Lines ────────────────────────────────────────────────────────
 
   async addLine(restaurantId: string, checkId: string, input: AddLineInput): Promise<CheckDetail> {
     const check = await this.checkOf(restaurantId, checkId);
@@ -319,7 +319,7 @@ export class ChecksService {
       unitPriceCents = item.priceCents;
     }
 
-    // Si ya existe una línea idéntica sin pagos, se acumula cantidad
+    // If an identical unpaid line already exists, bump its quantity
     const existing = await this.prisma.checkLine.findFirst({
       where: {
         checkId: check.id,

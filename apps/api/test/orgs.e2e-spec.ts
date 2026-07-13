@@ -29,7 +29,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Organizaciones y roles (e2e)", () => {
+describe("Organizations and roles (e2e)", () => {
   let app: INestApplication;
   let mail: MailStub;
   let prisma: PrismaService;
@@ -75,7 +75,7 @@ describe("Organizaciones y roles (e2e)", () => {
     await app.close();
   });
 
-  it("crea una organización y su creadora es OWNER", async () => {
+  it("creates an organization and its creator is OWNER", async () => {
     const res = await request(http)
       .post("/orgs")
       .set("Cookie", ownerCookies)
@@ -88,7 +88,7 @@ describe("Organizaciones y roles (e2e)", () => {
     expect(list.body.organizations.some((o: { id: string }) => o.id === orgId)).toBe(true);
   });
 
-  it("crea un restaurante con slug único", async () => {
+  it("creates a restaurant with a unique slug", async () => {
     const res = await request(http)
       .post(`/orgs/${orgId}/restaurants`)
       .set("Cookie", ownerCookies)
@@ -98,7 +98,7 @@ describe("Organizaciones y roles (e2e)", () => {
     expect(res.body.restaurant.slug).toMatch(/^cafe-nandu/);
   });
 
-  it("invita a un STAFF y la invitación se consulta públicamente", async () => {
+  it("invites a STAFF member and the invitation is publicly queryable", async () => {
     await request(http)
       .post(`/orgs/${orgId}/invitations`)
       .set("Cookie", ownerCookies)
@@ -112,7 +112,7 @@ describe("Organizaciones y roles (e2e)", () => {
     expect(info.body.invitation.userExists).toBe(false);
   });
 
-  it("acepta la invitación creando cuenta nueva (email ya verificado)", async () => {
+  it("accepts the invitation by creating a new account (email already verified)", async () => {
     const token = mail.invitationTokens.get(STAFF_EMAIL)!;
     const res = await request(http)
       .post("/invitations/accept-new")
@@ -126,7 +126,7 @@ describe("Organizaciones y roles (e2e)", () => {
     expect(org.role).toBe("STAFF");
   });
 
-  it("STAFF puede listar restaurantes pero no editarlos ni invitar", async () => {
+  it("STAFF can list restaurants but not edit them or invite", async () => {
     await request(http).get(`/orgs/${orgId}/restaurants`).set("Cookie", staffCookies).expect(200);
     await request(http)
       .patch(`/restaurants/${restaurantId}`)
@@ -140,12 +140,12 @@ describe("Organizaciones y roles (e2e)", () => {
       .expect(403);
   });
 
-  it("un usuario ajeno a la organización no ve sus recursos", async () => {
+  it("a user outside the organization can't see its resources", async () => {
     await request(http).get(`/restaurants/${restaurantId}`).set("Cookie", outsiderCookies).expect(403);
     await request(http).get(`/orgs/${orgId}/members`).set("Cookie", outsiderCookies).expect(403);
   });
 
-  it("ADMIN sube de rol al STAFF y entonces puede editar el restaurante", async () => {
+  it("ADMIN promotes the STAFF member, who can then edit the restaurant", async () => {
     const members = await request(http)
       .get(`/orgs/${orgId}/members`)
       .set("Cookie", ownerCookies)
@@ -166,7 +166,7 @@ describe("Organizaciones y roles (e2e)", () => {
       .expect(200);
   });
 
-  it("no se puede tocar al OWNER ni el propio rol", async () => {
+  it("you can't touch the OWNER or your own role", async () => {
     const members = await request(http)
       .get(`/orgs/${orgId}/members`)
       .set("Cookie", ownerCookies)
@@ -184,7 +184,7 @@ describe("Organizaciones y roles (e2e)", () => {
       .expect(403);
   });
 
-  it("la invitación aceptada no se puede reutilizar", async () => {
+  it("an accepted invitation can't be reused", async () => {
     const token = mail.invitationTokens.get(STAFF_EMAIL)!;
     await request(http)
       .post("/invitations/accept-new")
@@ -192,7 +192,7 @@ describe("Organizaciones y roles (e2e)", () => {
       .expect(400);
   });
 
-  it("solo OWNER puede borrar la organización", async () => {
+  it("only OWNER can delete the organization", async () => {
     await request(http).delete(`/orgs/${orgId}`).set("Cookie", staffCookies).expect(403);
   });
 });

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, PipeTransform } from "@nestjs/common";
 import { ZodSchema } from "zod";
 
-/** Valida el body de un endpoint con un esquema Zod compartido (packages/shared). */
+/** Validates an endpoint's body with a shared Zod schema (packages/shared). */
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
   constructor(private readonly schema: ZodSchema) {}

@@ -59,7 +59,7 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  // ── Registro y verificación ──────────────────────────────────────
+  // ── Sign-up and verification ─────────────────────────────────────
 
   async register(input: RegisterInput): Promise<{ user: AuthUser }> {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
@@ -86,7 +86,7 @@ export class AuthService {
 
   async resendVerification(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    // Respuesta silenciosa para no revelar si el email existe
+    // Silent response so we don't reveal whether the email exists
     if (!user || user.emailVerifiedAt) return;
     await this.sendVerification(user);
   }
@@ -99,7 +99,7 @@ export class AuthService {
     });
   }
 
-  // ── Login / sesiones ─────────────────────────────────────────────
+  // ── Login / sessions ─────────────────────────────────────────────
 
   async login(input: LoginInput): Promise<{ user: AuthUser; tokens: IssuedTokens }> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
@@ -137,7 +137,7 @@ export class AuthService {
     });
     if (!session) throw new UnauthorizedException("Sesión no válida");
     if (session.revokedAt) {
-      // Reutilización de un refresh token ya rotado: posible robo → se revoca todo
+      // Reuse of an already-rotated refresh token: possible theft → revoke everything
       await this.prisma.session.updateMany({
         where: { userId: session.userId, revokedAt: null },
         data: { revokedAt: new Date() },
@@ -162,7 +162,7 @@ export class AuthService {
     });
   }
 
-  // ── Contraseñas ──────────────────────────────────────────────────
+  // ── Passwords ────────────────────────────────────────────────────
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { email } });
@@ -176,7 +176,7 @@ export class AuthService {
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: record.userId },
-        // Restablecer por email también verifica la dirección
+        // Resetting via email also verifies the address
         data: { passwordHash: await argon2.hash(input.password), emailVerifiedAt: new Date() },
       }),
       this.prisma.session.updateMany({
@@ -197,7 +197,7 @@ export class AuthService {
     });
   }
 
-  // ── Perfil ───────────────────────────────────────────────────────
+  // ── Profile ──────────────────────────────────────────────────────
 
   async me(userId: string): Promise<AuthUser> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
@@ -210,22 +210,22 @@ export class AuthService {
   }
 
   /**
-   * Emite tokens para un usuario ya validado por otra vía
-   * (p. ej. aceptación de invitación con creación de cuenta).
+   * Issues tokens for a user already validated by another path
+   * (e.g. accepting an invitation while creating an account).
    */
   async issueTokensForUser(userId: string): Promise<{ user: AuthUser; tokens: IssuedTokens }> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     return { user: toAuthUser(user), tokens: await this.issueTokens(user) };
   }
 
-  // ── Tokens de un solo uso ────────────────────────────────────────
+  // ── Single-use tokens ────────────────────────────────────────────
 
   private async createOneTimeToken(
     userId: string,
     type: "EMAIL_VERIFICATION" | "PASSWORD_RESET",
     ttlMs: number,
   ): Promise<string> {
-    // Invalida tokens anteriores del mismo tipo aún no usados
+    // Invalidate previous unused tokens of the same type
     await this.prisma.verificationToken.deleteMany({ where: { userId, type, usedAt: null } });
     const token = randomBytes(32).toString("base64url");
     await this.prisma.verificationToken.create({

@@ -25,7 +25,7 @@ interface PublicData {
 
 async function getData(slug: string): Promise<PublicData | null> {
   const res = await fetch(`${API_URL}/public/restaurants/${slug}/menus`, {
-    // La carta vigente puede cambiar con la hora: no cachear en exceso
+    // The active menu can change with the time of day: don't over-cache
     next: { revalidate: 60 },
   });
   if (!res.ok) return null;
@@ -53,7 +53,7 @@ export async function generateMetadata({
   };
 }
 
-/** Ornamento tipográfico: plato del logomark en línea, para separar secciones. */
+/** Typographic ornament: the logomark plate inline, to separate sections. */
 function PlateOrnament({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden>

@@ -33,7 +33,7 @@ export class OrgsService {
     private readonly auth: AuthService,
   ) {}
 
-  // ── Organizaciones ───────────────────────────────────────────────
+  // ── Organizations ────────────────────────────────────────────────
 
   async create(userId: string, name: string): Promise<OrganizationWithRole> {
     const org = await this.prisma.organization.create({
@@ -79,7 +79,7 @@ export class OrgsService {
     return { ok: true };
   }
 
-  // ── Miembros ─────────────────────────────────────────────────────
+  // ── Members ──────────────────────────────────────────────────────
 
   async listMembers(orgId: string): Promise<MemberInfo[]> {
     const members = await this.prisma.membership.findMany({
@@ -124,7 +124,7 @@ export class OrgsService {
     return { ok: true };
   }
 
-  // ── Invitaciones ─────────────────────────────────────────────────
+  // ── Invitations ──────────────────────────────────────────────────
 
   async invite(orgId: string, inviterName: string, input: InviteMemberInput) {
     const org = await this.prisma.organization.findUniqueOrThrow({ where: { id: orgId } });
@@ -139,7 +139,7 @@ export class OrgsService {
       }
     }
 
-    // Solo una invitación pendiente por email y organización
+    // Only one pending invitation per email and organization
     await this.prisma.invitation.deleteMany({
       where: { organizationId: orgId, email: input.email, acceptedAt: null },
     });
@@ -205,7 +205,7 @@ export class OrgsService {
     };
   }
 
-  /** Acepta la invitación con una cuenta ya existente (el email debe coincidir). */
+  /** Accepts the invitation with an existing account (the email must match). */
   async acceptExisting(userId: string, userEmail: string, token: string) {
     const invitation = await this.findValidInvitation(token);
     if (invitation.email !== userEmail) {
@@ -225,7 +225,7 @@ export class OrgsService {
     return { ok: true };
   }
 
-  /** Acepta la invitación creando la cuenta (el email queda verificado al venir del propio correo). */
+  /** Accepts the invitation by creating the account (the email is verified since it came from the invite email). */
   async acceptNewUser(token: string, name: string, password: string) {
     const invitation = await this.findValidInvitation(token);
     const existing = await this.prisma.user.findUnique({ where: { email: invitation.email } });

@@ -85,7 +85,7 @@ export class MenusService {
     return menu;
   }
 
-  // ── Menús ────────────────────────────────────────────────────────
+  // ── Menus ────────────────────────────────────────────────────────
 
   async list(restaurantId: string, at?: Date): Promise<MenuSummary[]> {
     const restaurant = await this.restaurantOf(restaurantId);
@@ -240,7 +240,7 @@ export class MenusService {
     return this.get(restaurantId, menuId);
   }
 
-  // ── Categorías ───────────────────────────────────────────────────
+  // ── Categories ───────────────────────────────────────────────────
 
   async createCategory(restaurantId: string, menuId: string, input: CreateCategoryInput) {
     await this.menuOf(restaurantId, menuId);
@@ -278,7 +278,7 @@ export class MenusService {
     return { ok: true };
   }
 
-  // ── Platos ───────────────────────────────────────────────────────
+  // ── Dishes ───────────────────────────────────────────────────────
 
   async createItem(restaurantId: string, categoryId: string, input: CreateItemInput) {
     await this.categoryOf(restaurantId, categoryId);
@@ -320,7 +320,7 @@ export class MenusService {
     return { ok: true };
   }
 
-  // ── Menús vigentes (comandero y página pública) ──────────────────
+  // ── Active menus (waiter view and public page) ───────────────────
 
   async activeMenus(restaurantId: string, at?: Date): Promise<MenuDetail[]> {
     const restaurant = await this.restaurantOf(restaurantId);

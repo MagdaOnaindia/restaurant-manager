@@ -6,9 +6,9 @@ interface CheckEvent {
 }
 
 /**
- * Bus en memoria de cambios por cuenta. Los comensales y el comandero se
- * suscriben por SSE para ver los pagos en tiempo real.
- * (Con varias réplicas de la API esto pasaría a Redis pub/sub.)
+ * In-memory bus of per-bill changes. Diners and the waiter view subscribe
+ * over SSE to see payments in real time.
+ * (Across multiple API replicas this would move to Redis pub/sub.)
  */
 @Injectable()
 export class CheckEventsService {
@@ -18,7 +18,7 @@ export class CheckEventsService {
     this.subject.next({ checkId });
   }
 
-  /** Stream SSE: eventos "update" de la cuenta + latido cada 25s para mantener viva la conexión. */
+  /** SSE stream: bill "update" events + a 25s heartbeat to keep the connection alive. */
   streamFor(checkId: string): Observable<{ data: string; type: string }> {
     const updates = this.subject.pipe(
       filter((e) => e.checkId === checkId),

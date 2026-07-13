@@ -43,7 +43,7 @@ export class SplitPayService {
     private readonly config: ConfigService,
   ) {}
 
-  // ── Resolución del QR y vista pública ────────────────────────────
+  // ── QR resolution and public view ────────────────────────────────
 
   async resolveTable(qrCode: string): Promise<ResolveTableView> {
     const table = await this.prisma.table.findUnique({
@@ -123,7 +123,7 @@ export class SplitPayService {
     };
   }
 
-  // ── Reclamo de ítems (reparto por platos) ────────────────────────
+  // ── Item claims (splitting by dishes) ────────────────────────────
 
   async claimItems(token: string, input: ClaimItemsInput): Promise<{ amountCents: number }> {
     const check = await this.checkByToken(token);
@@ -131,7 +131,7 @@ export class SplitPayService {
     const now = new Date();
 
     const amountCents = await this.prisma.$transaction(async (tx) => {
-      // Los claims previos de esta sesión se sustituyen por la nueva selección
+      // This session's previous claims are replaced by the new selection
       await tx.lineClaim.deleteMany({
         where: { checkId: check.id, sessionId: input.sessionId, paymentId: null },
       });
@@ -182,7 +182,7 @@ export class SplitPayService {
     return { ok: true };
   }
 
-  // ── Creación del pago ────────────────────────────────────────────
+  // ── Creating the payment ─────────────────────────────────────────
 
   private assertPayable(status: string) {
     if (status !== "OPEN" && status !== "PARTIALLY_PAID") {
@@ -194,7 +194,7 @@ export class SplitPayService {
     }
   }
 
-  /** Importe reservado por intentos PENDING recientes (evita el doble "pagar todo"). */
+  /** Amount reserved by recent PENDING intents (prevents double "pay it all"). */
   private pendingReservedCents(payments: { status: string; amountCents: number; method: string; updatedAt: Date }[]) {
     const cutoff = Date.now() - PENDING_RESERVATION_MS;
     return payments
@@ -286,14 +286,14 @@ export class SplitPayService {
     let stripeIntent: { id: string; clientSecret: string };
 
     if (demoMode) {
-      // Sin claves de Stripe: flujo completo con confirmación simulada (solo dev)
+      // No Stripe keys: full flow with a simulated confirmation (dev only)
       stripeIntent = {
         id: `demo_pi_${Math.random().toString(36).slice(2)}`,
         clientSecret: "demo_secret",
       };
     } else {
-      // STRIPE_DIRECT_CHARGES=true (solo desarrollo): cobra a la cuenta de la
-      // plataforma sin Connect, para probar tarjetas antes de activar Connect.
+      // STRIPE_DIRECT_CHARGES=true (dev only): charges the platform account
+      // without Connect, to test cards before enabling Connect.
       const directCharges = this.config.get("STRIPE_DIRECT_CHARGES") === "true";
       let destinationAccountId: string | null = null;
       if (!directCharges) {
@@ -331,7 +331,7 @@ export class SplitPayService {
     });
 
     if (input.mode === "ITEMS") {
-      // Los claims quedan ligados al pago y protegidos mientras dura el cobro
+      // Claims are tied to the payment and protected for the duration of checkout
       await this.prisma.lineClaim.updateMany({
         where: { checkId: check.id, sessionId: input.sessionId, paymentId: null },
         data: {
@@ -351,9 +351,9 @@ export class SplitPayService {
     };
   }
 
-  // ── Resultado del pago (webhook = fuente de verdad) ──────────────
+  // ── Payment result (webhook = source of truth) ───────────────────
 
-  /** Idempotente: los webhooks de Stripe pueden llegar repetidos. */
+  /** Idempotent: Stripe webhooks can be delivered more than once. */
   async handleIntentSucceeded(stripePaymentIntentId: string): Promise<void> {
     const payment = await this.prisma.payment.findUnique({
       where: { stripePaymentIntentId },
@@ -370,7 +370,7 @@ export class SplitPayService {
         data: { status: "SUCCEEDED" },
       });
 
-      // Reparto por ítems: marca las unidades como pagadas y libera los claims
+      // Item split: mark the units as paid and release the claims
       const coverage = payment.coverage as CoverageClaims | null;
       if (coverage?.mode === "ITEMS" && coverage.claims) {
         for (const claim of coverage.claims) {
@@ -382,7 +382,7 @@ export class SplitPayService {
         await tx.lineClaim.deleteMany({ where: { paymentId: payment.id } });
       }
 
-      // Recalcular estado de la cuenta
+      // Recompute the bill status
       const check = await tx.check.findUniqueOrThrow({
         where: { id: payment.checkId },
         include: { lines: true, payments: true },
@@ -417,13 +417,13 @@ export class SplitPayService {
     if (!payment || payment.status === "SUCCEEDED") return;
     await this.prisma.$transaction([
       this.prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } }),
-      // Libera los ítems reservados para que otros puedan pagarlos
+      // Release the reserved items so others can pay for them
       this.prisma.lineClaim.deleteMany({ where: { paymentId: payment.id } }),
     ]);
     this.events.emit(payment.checkId);
   }
 
-  /** Confirmación simulada (solo cuando NO hay Stripe configurado; nunca en producción). */
+  /** Simulated confirmation (only when Stripe is NOT configured; never in production). */
   async devConfirm(token: string, paymentId: string): Promise<void> {
     if (this.stripe.isConfigured || this.config.get("NODE_ENV") === "production") {
       throw new BadRequestException("La confirmación simulada no está disponible");

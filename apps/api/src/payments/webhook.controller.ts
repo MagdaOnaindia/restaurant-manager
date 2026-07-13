@@ -15,8 +15,8 @@ import { StripeService } from "./stripe.service";
 import { SplitPayService } from "../split-pay/split-pay.service";
 
 /**
- * Receptor de webhooks de Stripe (fuente de verdad de pagos y cuentas).
- * En desarrollo: stripe listen --forward-to localhost:4000/webhooks/stripe
+ * Stripe webhook receiver (source of truth for payments and accounts).
+ * In development: stripe listen --forward-to localhost:4000/webhooks/stripe
  */
 @Controller("webhooks/stripe")
 export class StripeWebhookController {

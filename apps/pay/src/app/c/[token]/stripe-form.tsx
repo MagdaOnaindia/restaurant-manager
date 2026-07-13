@@ -25,7 +25,7 @@ function InnerForm({ returnUrl, onCancel }: { returnUrl: string; onCancel: () =>
       elements,
       confirmParams: { return_url: returnUrl },
     });
-    // Solo llegamos aquí si falla (si no, Stripe redirige)
+    // We only reach here on failure (otherwise Stripe redirects)
     setError(result.error.message ?? "No se pudo completar el pago");
     setPaying(false);
   }

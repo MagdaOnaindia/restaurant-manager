@@ -27,7 +27,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Cobro dividido (e2e)", () => {
+describe("Split payments (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let http: ReturnType<INestApplication["getHttpServer"]>;
@@ -53,8 +53,10 @@ describe("Cobro dividido (e2e)", () => {
   }
 
   beforeAll(async () => {
-    // Modo demo: sin Stripe configurado, el flujo usa confirmación simulada
-    delete process.env.STRIPE_SECRET_KEY;
+    // Demo mode: with no Stripe configured, the flow uses a simulated confirmation.
+    // Set to "" (not delete) so it wins over any value in a local .env file.
+    process.env.STRIPE_SECRET_KEY = "";
+    process.env.STRIPE_DIRECT_CHARGES = "";
 
     const mail = new MailStub();
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -68,7 +70,7 @@ describe("Cobro dividido (e2e)", () => {
     prisma = app.get(PrismaService);
     await prisma.user.deleteMany({ where: { email: EMAIL } });
 
-    // Restaurante con mesa y cuenta abierta con consumiciones
+    // Restaurant with a table and an open bill with items
     await request(http)
       .post("/auth/register")
       .send({ name: "Mesa", email: EMAIL, password: PASSWORD })
@@ -110,7 +112,7 @@ describe("Cobro dividido (e2e)", () => {
       .expect(201);
     checkId = check.body.check.id;
 
-    // Líneas libres: 2x Gilda (3,50), 1x Tortilla (12,00), 3x Caña (2,50) → total 26,50
+    // Free-form lines: 2x Gilda (3,50), 1x Tortilla (12,00), 3x Caña (2,50) → total 26,50
     for (const l of [
       { name: "Gilda", unitPriceCents: 350, quantity: 2 },
       { name: "Tortilla", unitPriceCents: 1200, quantity: 1 },
@@ -130,7 +132,7 @@ describe("Cobro dividido (e2e)", () => {
     await app.close();
   });
 
-  it("el QR de la mesa resuelve a la cuenta abierta", async () => {
+  it("the table QR resolves to the open bill", async () => {
     const res = await request(http).get(`/pay/t/${tableQr}`).expect(200);
     expect(res.body.restaurantName).toBe("Casa Dividida");
     expect(res.body.tableName).toBe("Mesa 7");
@@ -138,7 +140,7 @@ describe("Cobro dividido (e2e)", () => {
     checkToken = res.body.checkToken;
   });
 
-  it("la vista del comensal muestra líneas y totales", async () => {
+  it("the diner view shows lines and totals", async () => {
     const view = await payView(SESSION_A);
     expect(view.totalCents).toBe(2650);
     expect(view.paidCents).toBe(0);
@@ -148,8 +150,8 @@ describe("Cobro dividido (e2e)", () => {
     lineCania = view.lines.find((l: { name: string }) => l.name === "Caña").id;
   });
 
-  it("reparto por ítems: los claims de una sesión bloquean a la otra", async () => {
-    // Ana reclama 2 Gildas y 1 caña (9,50)
+  it("item split: one session's claims block the other", async () => {
+    // Ana claims 2 Gildas and 1 caña (9,50)
     const claim = await request(http)
       .post(`/pay/checks/${checkToken}/claims`)
       .send({
@@ -162,19 +164,19 @@ describe("Cobro dividido (e2e)", () => {
       .expect(200);
     expect(claim.body.amountCents).toBe(950);
 
-    // Carlos intenta reclamar una Gilda: no quedan disponibles
+    // Carlos tries to claim a Gilda: none are available
     await request(http)
       .post(`/pay/checks/${checkToken}/claims`)
       .send({ sessionId: SESSION_B, lines: [{ lineId: lineGilda, units: 1 }] })
       .expect(409);
 
-    // La vista de Carlos refleja la reserva de Ana
+    // Carlos's view reflects Ana's reservation
     const viewB = await payView(SESSION_B);
     const gildaB = viewB.lines.find((l: { id: string }) => l.id === lineGilda);
     expect(gildaB.availableUnits).toBe(0);
   });
 
-  it("paga sus ítems (con propina) y las unidades quedan marcadas", async () => {
+  it("pays their items (with a tip) and the units get marked paid", async () => {
     const intent = await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({ sessionId: SESSION_A, mode: "ITEMS", tipCents: 100, payerName: "Ana" })
@@ -194,7 +196,7 @@ describe("Cobro dividido (e2e)", () => {
     expect(view.payments[0].tipCents).toBe(100);
   });
 
-  it("a partes iguales: 1 de 2 partes de lo pendiente", async () => {
+  it("equal split: 1 of 2 shares of the remaining balance", async () => {
     const intent = await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({ sessionId: SESSION_B, mode: "SHARES", shares: { total: 2, pay: 1 }, tipCents: 0 })
@@ -206,14 +208,14 @@ describe("Cobro dividido (e2e)", () => {
     expect(view.remainingCents).toBe(850);
   });
 
-  it("dos personas pagan «todo lo restante» a la vez: la segunda recibe conflicto", async () => {
+  it("two people pay «all the remaining» at once: the second gets a conflict", async () => {
     const first = await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({ sessionId: SESSION_A, mode: "REMAINING", tipCents: 0 })
       .expect(200);
     expect(first.body.amountCents).toBe(850);
 
-    // Sin confirmar el primero, el segundo intento se bloquea
+    // Without confirming the first, the second attempt is blocked
     await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({ sessionId: SESSION_B, mode: "REMAINING", tipCents: 0 })
@@ -225,15 +227,15 @@ describe("Cobro dividido (e2e)", () => {
     expect(view.status).toBe("PAID");
   });
 
-  it("con la cuenta pagada no se admiten más pagos", async () => {
+  it("once the bill is paid, no more payments are accepted", async () => {
     await request(http)
       .post(`/pay/checks/${checkToken}/intents`)
       .send({ sessionId: SESSION_B, mode: "AMOUNT", amountCents: 100, tipCents: 0 })
       .expect(400);
   });
 
-  it("importe libre: valida tope y mínimo; división impar exacta con k=n", async () => {
-    // Nueva cuenta de 10,00 € en otra mesa
+  it("custom amount: validates cap and minimum; exact odd split with k=n", async () => {
+    // New 10,00 € bill on another table
     const zone = await request(http)
       .post(`/restaurants/${restaurantId}/zones`)
       .set("Cookie", cookies)
@@ -257,18 +259,18 @@ describe("Cobro dividido (e2e)", () => {
     const resolved = await request(http).get(`/pay/t/${table.body.table.qrCode}`).expect(200);
     const token2 = resolved.body.checkToken;
 
-    // Importe libre por encima de lo pendiente → 400
+    // Custom amount above the remaining balance → 400
     await request(http)
       .post(`/pay/checks/${token2}/intents`)
       .send({ sessionId: SESSION_A, mode: "AMOUNT", amountCents: 1200, tipCents: 0 })
       .expect(400);
-    // Por debajo del mínimo de tarjeta → 400 (validación Zod, min 50)
+    // Below the card minimum → 400 (Zod validation, min 50)
     await request(http)
       .post(`/pay/checks/${token2}/intents`)
       .send({ sessionId: SESSION_A, mode: "AMOUNT", amountCents: 20, tipCents: 0 })
       .expect(400);
 
-    // 10,00 entre 3: primera parte 3,33
+    // 10,00 across 3: first share 3,33
     const p1 = await request(http)
       .post(`/pay/checks/${token2}/intents`)
       .send({ sessionId: SESSION_A, mode: "SHARES", shares: { total: 3, pay: 1 }, tipCents: 0 })
@@ -278,7 +280,7 @@ describe("Cobro dividido (e2e)", () => {
       .post(`/pay/checks/${token2}/intents/${p1.body.paymentId}/dev-confirm`)
       .expect(200);
 
-    // Último: k=n paga exactamente lo pendiente (6,67) → suma exacta, sin céntimos perdidos
+    // Last: k=n pays exactly the remaining balance (6,67) → exact sum, no lost cents
     const p2 = await request(http)
       .post(`/pay/checks/${token2}/intents`)
       .send({ sessionId: SESSION_B, mode: "SHARES", shares: { total: 2, pay: 2 }, tipCents: 0 })
@@ -293,7 +295,7 @@ describe("Cobro dividido (e2e)", () => {
     expect(view.body.status).toBe("PAID");
   });
 
-  it("el comandero ve el estado de pagos en el plano de sala", async () => {
+  it("the waiter view sees the payment status on the floor plan", async () => {
     const floor = await request(http)
       .get(`/restaurants/${restaurantId}/floor`)
       .set("Cookie", cookies)

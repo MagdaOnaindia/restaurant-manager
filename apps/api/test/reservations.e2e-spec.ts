@@ -26,7 +26,7 @@ class MailStub {
 
 const EMAIL = "sala.reservas@test.local";
 const PASSWORD = "claveSegura1";
-// Un miércoles futuro fijo para que los tests sean deterministas
+// A fixed future Wednesday so the tests are deterministic
 const DATE = "2027-03-10";
 
 function cookieHeader(res: request.Response): string {
@@ -34,7 +34,7 @@ function cookieHeader(res: request.Response): string {
   return raw.map((line) => line.split(";")[0]).join("; ");
 }
 
-describe("Reservas (e2e)", () => {
+describe("Reservations (e2e)", () => {
   let app: INestApplication;
   let mail: MailStub;
   let prisma: PrismaService;
@@ -93,7 +93,7 @@ describe("Reservas (e2e)", () => {
     await app.close();
   });
 
-  it("configura un turno de comida L-V con aforo 6 por franja", async () => {
+  it("sets up a Mon-Fri lunch shift with capacity 6 per slot", async () => {
     await request(http)
       .post(`/restaurants/${restaurantId}/shifts`)
       .set("Cookie", cookies)
@@ -108,7 +108,7 @@ describe("Reservas (e2e)", () => {
       .expect(201);
   });
 
-  it("la disponibilidad pública muestra las franjas del turno", async () => {
+  it("public availability shows the shift's slots", async () => {
     const res = await request(http)
       .get(`/public/restaurants/${slug}/availability?date=${DATE}&partySize=2`)
       .expect(200);
@@ -117,7 +117,7 @@ describe("Reservas (e2e)", () => {
     expect(res.body.slots.every((s: { available: boolean }) => s.available)).toBe(true);
   });
 
-  it("un domingo no hay franjas (turno L-V)", async () => {
+  it("on a Sunday there are no slots (Mon-Fri shift)", async () => {
     const res = await request(http)
       .get(`/public/restaurants/${slug}/availability?date=2027-03-14&partySize=2`)
       .expect(200);
@@ -126,7 +126,7 @@ describe("Reservas (e2e)", () => {
 
   let cancelToken: string;
 
-  it("reserva pública con email de confirmación y consumo de aforo", async () => {
+  it("public booking with confirmation email and capacity consumption", async () => {
     await request(http)
       .post(`/public/restaurants/${slug}/reservations`)
       .send({
@@ -141,14 +141,14 @@ describe("Reservas (e2e)", () => {
     expect(mail.confirmations).toHaveLength(1);
     cancelToken = mail.confirmations[0]!.cancelToken;
 
-    // Quedan 1 de 6: para 2 personas la franja 13:00 ya no está disponible
+    // 1 of 6 left: for 2 people the 13:00 slot is no longer available
     const res = await request(http)
       .get(`/public/restaurants/${slug}/availability?date=${DATE}&partySize=2`)
       .expect(200);
     const slot13 = res.body.slots.find((s: { time: string }) => s.time === "13:00");
     expect(slot13.available).toBe(false);
 
-    // Y una reserva que excede el aforo se rechaza
+    // And a booking that exceeds capacity is rejected
     await request(http)
       .post(`/public/restaurants/${slug}/reservations`)
       .send({
@@ -161,7 +161,7 @@ describe("Reservas (e2e)", () => {
       .expect(409);
   });
 
-  it("una hora fuera de turno se rechaza (pero el personal puede forzar)", async () => {
+  it("a time outside any shift is rejected (but staff can force it)", async () => {
     await request(http)
       .post(`/public/restaurants/${slug}/reservations`)
       .send({
@@ -180,7 +180,7 @@ describe("Reservas (e2e)", () => {
       .expect(201);
   });
 
-  it("el backoffice lista las reservas del día", async () => {
+  it("the back office lists the day's reservations", async () => {
     const res = await request(http)
       .get(`/restaurants/${restaurantId}/reservations?date=${DATE}`)
       .set("Cookie", cookies)
@@ -189,7 +189,7 @@ describe("Reservas (e2e)", () => {
     expect(names).toEqual(["Familia López", "VIP forzado"]);
   });
 
-  it("cancelar por el enlace del email libera el aforo", async () => {
+  it("cancelling via the email link frees up capacity", async () => {
     const info = await request(http).get(`/public/reservations/${cancelToken}`).expect(200);
     expect(info.body.reservation.customerName).toBe("Familia López");
 
@@ -203,7 +203,7 @@ describe("Reservas (e2e)", () => {
     expect(slot13.available).toBe(true);
   });
 
-  it("cambiar estado desde el backoffice (SEATED)", async () => {
+  it("changes status from the back office (SEATED)", async () => {
     const list = await request(http)
       .get(`/restaurants/${restaurantId}/reservations?date=${DATE}`)
       .set("Cookie", cookies)

@@ -78,11 +78,11 @@ export const updateItemSchema = createItemSchema.partial().extend({
 });
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;
 
-// ── Tipos de respuesta ──────────────────────────────────────────────
+// ── Response types ──────────────────────────────────────────────────
 
 export interface MenuScheduleInfo {
   id: string;
-  dateFrom: string | null; // AAAA-MM-DD
+  dateFrom: string | null; // YYYY-MM-DD
   dateTo: string | null;
   daysOfWeek: number[];
   timeFrom: string | null;
@@ -134,7 +134,7 @@ export interface MenuDetail {
   categories: MenuCategoryInfo[];
 }
 
-// ── Resolución de vigencias (compartida API + frontends) ───────────
+// ── Schedule resolution (shared by API + front ends) ────────────────
 
 interface ScheduleLike {
   dateFrom: string | null;
@@ -144,7 +144,7 @@ interface ScheduleLike {
   timeTo: string | null;
 }
 
-/** Fecha/hora locales de una zona horaria: día ISO (1=lunes), "HH:MM" y "AAAA-MM-DD". */
+/** Local date/time in a timezone: ISO day (1=Monday), "HH:MM" and "YYYY-MM-DD". */
 export function getZonedParts(date: Date, timeZone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone,
@@ -176,7 +176,7 @@ export function isScheduleActive(schedule: ScheduleLike, now: Date, timeZone: st
   return true;
 }
 
-/** Un menú sin vigencias está siempre activo; con varias, basta con que una aplique. */
+/** A menu with no schedules is always active; with several, one match is enough. */
 export function isMenuActiveNow(
   menu: { schedules: ScheduleLike[] },
   now: Date,
@@ -196,7 +196,7 @@ export const DAY_LABELS_ES: Record<number, string> = {
   7: "Dom",
 };
 
-/** Formatea céntimos como importe en euros ("12,50 €"). */
+/** Formats cents as a euro amount ("12,50 €"). */
 export function formatCents(cents: number, currency = "EUR"): string {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency }).format(cents / 100);
 }

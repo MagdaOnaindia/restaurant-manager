@@ -35,7 +35,7 @@ export class ReservationsController {
     private readonly prisma: PrismaService,
   ) {}
 
-  // ── Turnos ───────────────────────────────────────────────────────
+  // ── Shifts ───────────────────────────────────────────────────────
 
   @Get("shifts")
   @OrgRoles("STAFF")
@@ -68,7 +68,7 @@ export class ReservationsController {
     return this.reservations.removeShift(restaurantId, shiftId);
   }
 
-  // ── Reservas ─────────────────────────────────────────────────────
+  // ── Reservations ─────────────────────────────────────────────────
 
   @Get("reservations")
   @OrgRoles("STAFF")

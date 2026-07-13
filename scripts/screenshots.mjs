@@ -1,8 +1,8 @@
 /**
- * Genera las capturas de docs/screenshots a partir de la cuenta demo.
- * Requiere: servidores levantados + `node scripts/seed-demo.mjs` ejecutado antes.
+ * Generates the docs/screenshots images from the demo account.
+ * Requires: servers running + `node scripts/seed-demo.mjs` executed first.
  *
- * Uso: node scripts/screenshots.mjs
+ * Usage: node scripts/screenshots.mjs
  */
 import { chromium } from "playwright";
 import { mkdirSync, readFileSync } from "fs";
@@ -18,7 +18,7 @@ mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
 
-/** goto con reintentos: el HMR del dev server puede interrumpir la primera navegación. */
+/** goto with retries: the dev server's HMR can interrupt the first navigation. */
 async function goto(page, path) {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -34,14 +34,14 @@ async function goto(page, path) {
 async function shot(page, path, name, { fullPage = false } = {}) {
   await goto(page, path);
   await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => {});
-  await page.waitForTimeout(1200); // fuentes + transiciones + primera compilación en dev
-  // Oculta el botón de las dev tools de Next en las capturas
+  await page.waitForTimeout(1200); // fonts + transitions + first dev compile
+  // Hide the Next dev tools button in the screenshots
   await page.addStyleTag({ content: "nextjs-portal{display:none!important}" }).catch(() => {});
   await page.screenshot({ path: join(OUT, `${name}.png`), fullPage });
   console.log(`✓ ${name}.png`);
 }
 
-// ── Escritorio ──────────────────────────────────────────────────────
+// ── Desktop ─────────────────────────────────────────────────────────
 const desktop = await browser.newContext({
   viewport: { width: 1360, height: 850 },
   locale: "es-ES",
@@ -51,10 +51,10 @@ const page = await desktop.newPage();
 
 await shot(page, `${WEB}/`, "01-landing", { fullPage: false });
 
-// Login con la cuenta demo
+// Log in with the demo account
 await goto(page, `${WEB}/login`);
 await page.waitForSelector("#email", { timeout: 60_000 });
-// Espera a la hidratación de React: si se rellena antes, los campos controlados se vacían
+// Wait for React hydration: filling too early clears the controlled fields
 await page.waitForLoadState("networkidle").catch(() => {});
 await page.waitForTimeout(2000);
 for (let attempt = 0; attempt < 3; attempt++) {
@@ -66,7 +66,7 @@ for (let attempt = 0; attempt < 3; attempt++) {
     .then(() => true)
     .catch(() => false);
   if (arrived) break;
-  if (attempt === 2) throw new Error("El login no llegó a /app");
+  if (attempt === 2) throw new Error("Login didn't reach /app");
   await page.waitForTimeout(2000);
 }
 await page.waitForTimeout(1500);
@@ -79,7 +79,7 @@ await shot(page, `${WEB}/app/reservations`, "06-reservas");
 await shot(page, `${WEB}/r/${info.slug}`, "07-pagina-publica");
 await desktop.close();
 
-// ── Móvil (app del comensal) ────────────────────────────────────────
+// ── Mobile (diner app) ──────────────────────────────────────────────
 const mobile = await browser.newContext({
   viewport: { width: 390, height: 844 },
   locale: "es-ES",
@@ -92,4 +92,4 @@ await shot(phone, `${PAY}/c/${info.checkToken}`, "08-comensal-cuenta", { fullPag
 await mobile.close();
 
 await browser.close();
-console.log("\nCapturas generadas en docs/screenshots/");
+console.log("\nScreenshots generated in docs/screenshots/");

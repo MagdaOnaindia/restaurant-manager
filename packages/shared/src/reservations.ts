@@ -51,7 +51,7 @@ export type PublicReservationInput = z.infer<typeof publicReservationSchema>;
 
 export const staffReservationSchema = publicReservationSchema.extend({
   customerPhone: z.string().trim().max(30).optional(),
-  // El personal puede forzar una reserva aunque la franja esté llena
+  // Staff can force a booking even when the slot is full
   force: z.boolean().default(false),
 });
 export type StaffReservationInput = z.infer<typeof staffReservationSchema>;
@@ -65,7 +65,7 @@ export const updateReservationSchema = z.object({
 });
 export type UpdateReservationInput = z.infer<typeof updateReservationSchema>;
 
-// ── Tipos de respuesta ──────────────────────────────────────────────
+// ── Response types ──────────────────────────────────────────────────
 
 export interface ShiftInfo {
   id: string;
@@ -101,7 +101,7 @@ export interface ReservationInfo {
   shiftName: string | null;
 }
 
-/** Genera las horas de entrada de un turno: start..end inclusive, con paso slotMinutes. */
+/** Generates a shift's start times: start..end inclusive, stepping by slotMinutes. */
 export function shiftSlots(shift: { startTime: string; endTime: string; slotMinutes: number }): string[] {
   const toMinutes = (t: string) => {
     const [h = 0, m = 0] = t.split(":").map(Number);

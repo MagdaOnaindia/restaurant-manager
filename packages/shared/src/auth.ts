@@ -52,7 +52,7 @@ export const updateProfileSchema = z.object({
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-/** Usuario tal y como lo exponen los endpoints (sin datos sensibles). */
+/** User as exposed by the endpoints (no sensitive data). */
 export interface AuthUser {
   id: string;
   email: string;

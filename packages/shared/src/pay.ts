@@ -28,14 +28,14 @@ export const createIntentSchema = z
   .object({
     sessionId: z.string().min(8).max(64),
     mode: z.enum(SPLIT_MODES),
-    // SHARES: pago k de n partes
+    // SHARES: pay k of n shares
     shares: z
       .object({
         total: z.number().int().min(2).max(20),
         pay: z.number().int().min(1).max(20),
       })
       .optional(),
-    // AMOUNT: importe libre en céntimos
+    // AMOUNT: custom amount in cents
     amountCents: z.number().int().min(50).optional(),
     tipCents: z.number().int().min(0).max(50_000).default(0),
     payerName: z.string().trim().max(60).optional(),
@@ -49,7 +49,7 @@ export const createIntentSchema = z
   });
 export type CreateIntentInput = z.infer<typeof createIntentSchema>;
 
-// ── Vistas públicas del comensal ────────────────────────────────────
+// ── Public diner-facing views ───────────────────────────────────────
 
 export interface PayLineView {
   id: string;
@@ -57,9 +57,9 @@ export interface PayLineView {
   unitPriceCents: number;
   quantity: number;
   paidUnits: number;
-  /** Unidades que este comensal puede reclamar ahora (descuenta claims ajenos activos). */
+  /** Units this diner can claim right now (excludes other diners' active claims). */
   availableUnits: number;
-  /** Unidades reclamadas por ESTA sesión. */
+  /** Units claimed by THIS session. */
   myClaimedUnits: number;
 }
 
@@ -84,7 +84,7 @@ export interface PayCheckView {
   paidCents: number;
   remainingCents: number;
   payments: PayPaymentView[];
-  /** Clave pública de Stripe; null = modo demo sin pasarela. */
+  /** Stripe publishable key; null = demo mode without a gateway. */
   stripePublishableKey: string | null;
 }
 
@@ -93,7 +93,7 @@ export interface CreatedIntentView {
   clientSecret: string;
   amountCents: number;
   tipCents: number;
-  /** true si no hay Stripe configurado: el front muestra confirmación demo. */
+  /** true when Stripe isn't configured: the front end shows a demo confirmation. */
   demoMode: boolean;
 }
 
@@ -103,7 +103,7 @@ export interface ResolveTableView {
   checkToken: string | null;
 }
 
-/** Reparto en partes iguales: importe de pagar k de n sobre lo pendiente. */
+/** Equal split: amount for paying k of n shares of the remaining balance. */
 export function shareAmount(remainingCents: number, total: number, pay: number): number {
   if (pay >= total) return remainingCents;
   return Math.floor((remainingCents * pay) / total);

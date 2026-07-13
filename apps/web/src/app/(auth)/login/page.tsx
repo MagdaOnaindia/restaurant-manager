@@ -11,7 +11,7 @@ import { Alert, Button, Card, Field, Input, Spinner } from "@/components/ui";
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  // Solo aceptamos rutas internas como destino post-login
+  // Only accept internal routes as the post-login destination
   const rawNext = params.get("next");
   const next = rawNext && rawNext.startsWith("/") ? rawNext : "/app";
   const { setUser } = useAuth();
